@@ -36,7 +36,7 @@
     <property name="title">
      <string>Pipe Line Data</string>
     </property>
-    <layout class="QGridLayout" name="gridLayout_LeidingGegevens" columnminimumwidth="180,0,150">
+    <layout class="QGridLayout" name="gridLayout_LineData" columnminimumwidth="180,0,150">
      <item row="0" column="0">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -186,7 +186,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QGroupBox" name="Invoer_Vloeistof">
+   <widget class="QGroupBox" name="Input_Liquid">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -205,7 +205,7 @@
     <property name="title">
      <string>Liquid Data</string>
     </property>
-    <layout class="QGridLayout" name="gridLayout_3" columnminimumwidth="180,0,50,100">
+    <layout class="QGridLayout" name="gridLayout_LiquidData" columnminimumwidth="180,0,50,100">
      <item row="0" column="0">
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
@@ -362,7 +362,7 @@
         <number>40</number>
        </property>
        <item>
-        <widget class="QRadioButton" name="DynVisBekend">
+        <widget class="QRadioButton" name="DynVisKnown">
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -382,7 +382,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="KinViscBekend">
+        <widget class="QRadioButton" name="KinViscKnown">
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -402,7 +402,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QGroupBox" name="Invoer_Stroming">
+   <widget class="QGroupBox" name="Input_Flow">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -421,7 +421,7 @@
     <property name="title">
      <string>Flow Data</string>
     </property>
-    <layout class="QGridLayout" name="gridLayout_2" columnminimumwidth="180,0,50,100">
+    <layout class="QGridLayout" name="gridLayout_FlowData" columnminimumwidth="180,0,50,100">
      <item row="0" column="0">
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
@@ -530,7 +530,7 @@
      <item row="0" column="3">
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QRadioButton" name="SnelheidBekend">
+        <widget class="QRadioButton" name="VelocityKnown">
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -550,7 +550,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="DebietBekend">
+        <widget class="QRadioButton" name="FlowRateKnown">
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -965,10 +965,10 @@
   <tabstop>Liquid_ViscKin</tabstop>
   <tabstop>Flow_Velocity</tabstop>
   <tabstop>Flow_Rate</tabstop>
-  <tabstop>DynVisBekend</tabstop>
-  <tabstop>KinViscBekend</tabstop>
-  <tabstop>SnelheidBekend</tabstop>
-  <tabstop>DebietBekend</tabstop>
+  <tabstop>DynVisKnown</tabstop>
+  <tabstop>KinViscKnown</tabstop>
+  <tabstop>VelocityKnown</tabstop>
+  <tabstop>FlowRateKnown</tabstop>
  </tabstops>
  <resources/>
  <connections/>
