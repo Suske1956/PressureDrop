@@ -19,7 +19,7 @@ class Calculate:
         self.dynamic_viscosity = None
         self.dynamic_viscosity_ok = False
         self.kinematic_viscosity = None
-        self.kinematic_viscosity = False
+        self.kinematic_viscosity_ok = False
         self.velocity = None
         self.velocity_ok = False
         self.flow_rate = None
@@ -40,116 +40,116 @@ class Calculate:
         self.method = 'Unknown'
 
     def calculate_start(self):
-        # convert velocity and flow rate triggered by radio buttons
-        if self.snelheid_actief:
-            if self.diameter_ok and self.snelheid_ok:
-                self.debiet = math.pow(self.diameter / 2, 2) * math.pi * self.snelheid
-                self.debiet_ok = True
+        # convert velocity into flow rate vice versa triggered by the radio buttons
+        if self.velocity_active:
+            if self.diameter_ok and self.velocity_ok:
+                self.flow_rate = math.pow(self.diameter / 2, 2) * math.pi * self.velocity
+                self.flow_rate_ok = True
             else:
-                self.debiet_ok = False
+                self.flow_rate_ok = False
         else:
-            if self.diameter_ok and self.debiet_ok:
-                self.snelheid = self.debiet / (math.pow(self.diameter / 2, 2) * math.pi)
-                self.snelheid_ok = True
+            if self.diameter_ok and self.flow_rate_ok:
+                self.velocity = self.flow_rate / (math.pow(self.diameter / 2, 2) * math.pi)
+                self.velocity_ok = True
             else:
-                self.snelheid_ok = False
+                self.velocity_ok = False
 
-        # omrekenen kinematische en dynamische viscositeit, afhankelijk stand radiobuttons
-        if self.dynvisc_actief:
-            if self.densiteit_ok and self.dyn_visc_ok:
-                self.kin_visc = self.dyn_visc / self.densiteit
-                self.kin_visc_ok = True
+        # convert kinematic into dynamic viscosity vice versa triggered by the radio buttons.
+        if self.dynamic_viscosity_active:
+            if self.density_ok and self.dynamic_viscosity_ok:
+                self.kinematic_viscosity = self.dynamic_viscosity / self.density
+                self.kinematic_viscosity_ok = True
             else:
-                self.kin_visc_ok = False
+                self.kinematic_viscosity_ok = False
         else:
-            if self.densiteit_ok and self.kin_visc_ok:
-                self.dyn_visc = self.kin_visc * self.densiteit
-                self.dyn_visc_ok = True
+            if self.density_ok and self.kinematic_viscosity_ok:
+                self.dynamic_viscosity = self.kinematic_viscosity * self.density
+                self.dynamic_viscosity_ok = True
             else:
-                self.dyn_visc_ok = False
+                self.dynamic_viscosity_ok = False
 
-        # bereken leiding inhoud
-        if self.lengte_ok and self.diameter_ok:
-            self.inhoud = self.lengte * (self.diameter/2)**2*math.pi
-            self.inhoud_ok = True
+        # Calculate line volume
+        if self.length_ok and self.diameter_ok:
+            self.volume = self.length * (self.diameter/2)**2*math.pi
+            self.volume_ok = True
         else:
-            self.inhoud_ok = False
+            self.volume_ok = False
 
-        # bereken reynolds getal
-        if self.diameter_ok and self.kin_visc_ok and self.snelheid_ok:
-            self.reynolds_getal = (self.snelheid * self.diameter) / self.kin_visc
-            self.reynolds_getal_ok = True
-            self.bepaal_ruwheid()
-            self.bereken_frictiefactor()
-            if self.reynolds_getal < 2320:
-                self.stroming_type = 'Laminair'
+        # Calculate Reynolds number
+        if self.diameter_ok and self.kinematic_viscosity_ok and self.velocity_ok:
+            self.reynolds_number = (self.velocity * self.diameter) / self.kinematic_viscosity
+            self.reynolds_number_ok = True
+            self.determine_relative_roughness()
+            self.calculate_friction_factor()
+            if self.reynolds_number < 2320:
+                self.flow_regime = 'Laminar'
             else:
-                self.stroming_type = 'Turbulent'
+                self.flow_regime = 'Turbulent'
         else:
-            self.reynolds_getal_ok = False
-            self.stroming_type = 'Niet Bekend'
+            self.reynolds_number_ok = False
+            self.flow_regime = 'Unknown'
 
-    def bepaal_ruwheid(self):
-        if self.reynolds_getal_ok and self.diameter_ok and self.wandruwheid_ok:
-            if self.reynolds_getal * self.wandruwheid / self.diameter < 65:
-                self.leiding_ruwheid = 'Gladde buis'
-                self.leiding_gladde_buis = True
-            elif 65 <= self.reynolds_getal * self.wandruwheid / self.diameter < 1300:
-                self.leiding_ruwheid = 'Overgangsgebied'
-                self.leiding_gladde_buis = False
+    def determine_relative_roughness(self):
+        if self.reynolds_number and self.diameter_ok and self.roughness_ok:
+            if self.reynolds_number * self.roughness / self.diameter < 65:
+                self.type_of_conduit = 'Smooth conduit'
+                self.line_smooth = True
+            elif 65 <= self.reynolds_number * self.roughness / self.diameter < 1300:
+                self.type_of_conduit = 'Intermediate conduit'
+                self.line_smooth = False
             else:
-                self.leiding_ruwheid = 'Ruwe buis'
-                self.leiding_gladde_buis = False
+                self.type_of_conduit = 'Rough conduit'
+                self.line_smooth = False
         else:
-            self.leiding_ruwheid = 'Niet Bekend'
+            self.type_of_conduit = 'Unknown'
 
     @staticmethod
-    def colebrook_white(x, diameter, ruwheid, reynolds):
-        return (1 / math.sqrt(x)) + 2 * math.log10((ruwheid / (3.7 * diameter)) + 2.51 / (reynolds * math.sqrt(x)))
+    def colebrook_white(x, diameter, roughness, reynolds):
+        return (1 / math.sqrt(x)) + 2 * math.log10((roughness / (3.7 * diameter)) + 2.51 / (reynolds * math.sqrt(x)))
 
-    def bereken_frictiefactor(self):
-        if self.reynolds_getal_ok and self.diameter_ok and self.wandruwheid_ok:
-            if self.reynolds_getal < 2320 and self.leiding_gladde_buis:
-                self.frictie_factor = 64/self.reynolds_getal
+    def calculate_friction_factor(self):
+        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok:
+            if self.reynolds_number < 2320 and self.line_smooth:
+                self.friction_factor = 64/self.reynolds_number
                 self.frictie_factor_ok = True
-                self.rekenmethode = 'Laminair, Glad'
-            elif 2320 <= self.reynolds_getal < 4000 and self.leiding_gladde_buis:
-                self.frictie_factor = 0.3164 * math.pow(self.reynolds_getal, -0.25)
-                self.frictie_factor_ok = True
-                self.rekenmethode = 'Blasius'
+                self.method = 'Laminar, Smooth'
+            elif 2320 <= self.reynolds_number < 4000 and self.line_smooth:
+                self.friction_factor = 0.3164 * math.pow(self.reynolds_number, -0.25)
+                self.friction_factor_ok = True
+                self.method = 'Blasius'
             else:
-                self.frictie_factor = brentq(self.colebrook_white, 1e-10, 1e10, args=(
-                    self.diameter, self.wandruwheid, self.reynolds_getal))
-                self.frictie_factor_ok = True
-                self.rekenmethode = 'Colebrook White'
-            self.bereken_drukverschil()
+                self.friction_factor = brentq(self.colebrook_white, 1e-10, 1e10, args=(
+                    self.diameter, self.roughness, self.reynolds_number))
+                self.friction_factor_ok = True
+                self.method = 'Colebrook White'
+            self.calculate_pressure_drop()
 
-    def bereken_drukverschil(self):
-        if self.frictie_factor_ok and self.lengte_ok and self.diameter_ok and self.snelheid_ok and self.densiteit_ok:
-            self.drukverschil = self.frictie_factor * self.lengte /\
-                                self.diameter * self.densiteit / 2 * self.snelheid ** 2
-            self.drukverschil_ok = True
+    def calculate_pressure_drop(self):
+        if self.friction_factor_ok and self.length_ok and self.diameter_ok and self.velocity_ok and self.density_ok:
+            self.pressure_drop = self.friction_factor * self.length /\
+                                self.diameter * self.density / 2 * self.velocity ** 2
+            self.pressure_drop_ok = True
         else:
-            self.drukverschil_ok = False
+            self.pressure_drop_ok = False
 
 
-class Invoerveld:
+class Check_input:
     def __init__(self):
-        self.waarde_str = None
-        self.waarde_float = None
-        self.invoer_ok = False
-        self.stijl_string = 'background-color: red;'
+        self.value_str = None
+        self.value_float = None
+        self.input_ok = False
+        self.style_string = 'background-color: red;'
 
-    def test_invoer(self):
+    def test_input(self):
         try:
-            self.waarde_float = float(self.waarde_str)
+            self.value_float = float(self.value_str)
         except ValueError:
-            self.invoer_ok = False
-            self.stijl_string = 'background-color: red;'
+            self.input_ok = False
+            self.style_string = 'background-color: red;'
         else:
-            self.invoer_ok = True
-            self.stijl_string = 'background-color: white;'
-            return self.waarde_float
+            self.input_ok = True
+            self.style_string = 'background-color: white;'
+            return self.value_float
 
 
 class MainWindowExec:
@@ -161,15 +161,15 @@ class MainWindowExec:
         self.ui.setupUi(mainwindow)
 
         # objecten
-        self.reken = Rekenen()
-        self.leiding_diameter = Invoerveld()
-        self.leiding_lengte = Invoerveld()
-        self.leiding_wandruwheid = Invoerveld()
-        self.vloeistof_densiteit = Invoerveld()
-        self.vloeistof_viscdyn = Invoerveld()
-        self.vloeistof_visckin = Invoerveld()
-        self.stroming_snelheid = Invoerveld()
-        self.stroming_debiet = Invoerveld()
+        self.calc = Calculate()
+        self.line_length = Check_input()
+        self.line_diameter = Check_input()
+        self.line_roughness = Check_input()
+        self.liquid_density = Check_input()
+        self.liquid_viscdyn = Check_input()
+        self.liquid_visckin = Check_input()
+        self.flow_velocity = Check_input()
+        self.flow_rate = Check_input()
 
         self.bereken_start()
 
@@ -177,34 +177,34 @@ class MainWindowExec:
         sys.exit(app.exec_())
 
     def bereken_start(self):
-        self.ui.Leiding_Lengte.editingFinished.connect(self.leiding_lengte_start)
-        self.ui.Leiding_Diameter.editingFinished.connect(self.leiding_diameter_start)
-        self.ui.Leiding_Wandruwheid.editingFinished.connect(self.leiding_wandruwheid_start)
-        self.ui.Vloeistof_Densiteit.editingFinished.connect(self.vloeistof_densiteit_start)
-        self.ui.Vloeistof_ViscDyn.editingFinished.connect(self.vloeistof_viscdyn_start)
-        self.ui.Vloeistof_ViscKin.editingFinished.connect(self.vloeistof_visckin_start)
-        self.ui.Stroming_Snelheid.editingFinished.connect(self.stroming_snelheid_start)
-        self.ui.Stroming_Debiet.editingFinished.connect(self.stroming_debiet_start)
-        self.ui.DynVisBekend.clicked.connect(self.visc_bekend)
-        self.ui.KinViscBekend.clicked.connect(self.visc_bekend)
-        self.ui.SnelheidBekend.clicked.connect(self.stromingtype_bekend)
-        self.ui.DebietBekend.clicked.connect(self.stromingtype_bekend)
+        self.ui.Line_Length.editingFinished.connect(self.line_length_start)
+        self.ui.Line_Diameter.editingFinished.connect(self.line_diameter_start)
+        self.ui.Line_WallRoughness.editingFinished.connect(self.leiding_wandruwheid_start)  # nog doen
+        self.ui.Liquid_Density.editingFinished.connect(self.vloeistof_densiteit_start)  # nog doen
+        self.ui.Liquid_ViscDyn.editingFinished.connect(self.vloeistof_viscdyn_start)  # nog doen
+        self.ui.Liquid_ViscKin.editingFinished.connect(self.vloeistof_visckin_start)  # nog doen
+        self.ui.Flow_Velocity.editingFinished.connect(self.stroming_snelheid_start)  # nog doen
+        self.ui.Flow_Rate.editingFinished.connect(self.stroming_debiet_start)  # nog doen
+        self.ui.DynVisKnown.clicked.connect(self.visc_bekend)  # nog doen
+        self.ui.KinViscKnown.clicked.connect(self.visc_bekend)  # nog doen
+        self.ui.VelocityKnown.clicked.connect(self.stromingtype_bekend)  # nog doen
+        self.ui.FlowRateKnown.clicked.connect(self.stromingtype_bekend)  # nog doen
 
-    def leiding_lengte_start(self):
-        self.leiding_lengte.waarde_str = self.ui.Leiding_Lengte.text()
-        self.reken.lengte = self.leiding_lengte.test_invoer()
-        self.reken.lengte_ok = self.leiding_lengte.invoer_ok
-        self.ui.Leiding_Lengte.setStyleSheet(self.leiding_lengte.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def line_length_start(self):
+        self.line_length.value_str = self.ui.Line_Length.text()
+        self.calc.length = self.line_length.test_input()
+        self.calc.length_ok = self.line_length.input_ok
+        self.ui.Line_Length.setStyleSheet(self.line_length.style_string)
+        self.calc.calculate_start()
+        self.output()
 
-    def leiding_diameter_start(self):
-        self.leiding_diameter.waarde_str = self.ui.Leiding_Diameter.text()
-        self.reken.diameter = self.leiding_diameter.test_invoer()
-        self.reken.diameter_ok = self.leiding_diameter.invoer_ok
-        self.ui.Leiding_Diameter.setStyleSheet(self.leiding_diameter.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def line_diameter_start(self):
+        self.line_diameter.value_str = self.ui.Line_Diameter.text()
+        self.calc.diameter = self.line_diameter.test_input()
+        self.calc.diameter_ok = self.line_diameter.input_ok
+        self.ui.Line_Diameter.setStyleSheet(self.line_diameter.style_string)
+        self.calc.calculate_start()
+        self.output()
 
     def leiding_wandruwheid_start(self):
         self.leiding_wandruwheid.waarde_str = self.ui.Leiding_Wandruwheid.text()
@@ -274,7 +274,7 @@ class MainWindowExec:
             self.ui.Stroming_Debiet.setEnabled(True)
             self.reken.snelheid_actief = False
 
-    def uitvoer(self):
+    def output(self):
         # formatteren van invoervelden, na een invoer
         if self.reken.lengte_ok:
             self.ui.Leiding_Lengte.setText(f'{self.reken.lengte:.4e}')
