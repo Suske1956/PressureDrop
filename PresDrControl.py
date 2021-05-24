@@ -111,7 +111,7 @@ class Calculate:
         if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok:
             if self.reynolds_number < 2320 and self.line_smooth:
                 self.friction_factor = 64/self.reynolds_number
-                self.frictie_factor_ok = True
+                self.friction_factor_ok = True
                 self.method = 'Laminar, Smooth'
             elif 2320 <= self.reynolds_number < 4000 and self.line_smooth:
                 self.friction_factor = 0.3164 * math.pow(self.reynolds_number, -0.25)
@@ -133,7 +133,7 @@ class Calculate:
             self.pressure_drop_ok = False
 
 
-class Check_input:
+class Check_Input:
     def __init__(self):
         self.value_str = None
         self.value_float = None
@@ -160,35 +160,35 @@ class MainWindowExec:
         self.ui = Ui_MainWindow()
         self.ui.setupUi(mainwindow)
 
-        # objecten
+        # objects
         self.calc = Calculate()
-        self.line_length = Check_input()
-        self.line_diameter = Check_input()
-        self.line_roughness = Check_input()
-        self.liquid_density = Check_input()
-        self.liquid_viscdyn = Check_input()
-        self.liquid_visckin = Check_input()
-        self.flow_velocity = Check_input()
-        self.flow_rate = Check_input()
+        self.line_length = Check_Input()
+        self.line_diameter = Check_Input()
+        self.line_roughness = Check_Input()
+        self.liquid_density = Check_Input()
+        self.liquid_viscdyn = Check_Input()
+        self.liquid_visckin = Check_Input()
+        self.flow_velocity = Check_Input()
+        self.flow_rate = Check_Input()
 
-        self.bereken_start()
+        self.calculation_start()
 
         mainwindow.show()
         sys.exit(app.exec_())
 
-    def bereken_start(self):
+    def calculation_start(self):
         self.ui.Line_Length.editingFinished.connect(self.line_length_start)
         self.ui.Line_Diameter.editingFinished.connect(self.line_diameter_start)
-        self.ui.Line_WallRoughness.editingFinished.connect(self.leiding_wandruwheid_start)  # nog doen
-        self.ui.Liquid_Density.editingFinished.connect(self.vloeistof_densiteit_start)  # nog doen
-        self.ui.Liquid_ViscDyn.editingFinished.connect(self.vloeistof_viscdyn_start)  # nog doen
-        self.ui.Liquid_ViscKin.editingFinished.connect(self.vloeistof_visckin_start)  # nog doen
-        self.ui.Flow_Velocity.editingFinished.connect(self.stroming_snelheid_start)  # nog doen
-        self.ui.Flow_Rate.editingFinished.connect(self.stroming_debiet_start)  # nog doen
-        self.ui.DynVisKnown.clicked.connect(self.visc_bekend)  # nog doen
-        self.ui.KinViscKnown.clicked.connect(self.visc_bekend)  # nog doen
-        self.ui.VelocityKnown.clicked.connect(self.stromingtype_bekend)  # nog doen
-        self.ui.FlowRateKnown.clicked.connect(self.stromingtype_bekend)  # nog doen
+        self.ui.Line_WallRoughness.editingFinished.connect(self.line_wallroughness_start)
+        self.ui.Liquid_Density.editingFinished.connect(self.liquid_density_start)
+        self.ui.Liquid_ViscDyn.editingFinished.connect(self.liquid_viscdyn_start)
+        self.ui.Liquid_ViscKin.editingFinished.connect(self.liquid_visckin_start)
+        self.ui.Flow_Velocity.editingFinished.connect(self.liquid_velocity_start)
+        self.ui.Flow_Rate.editingFinished.connect(self.flow_rate_start)
+        self.ui.DynVisKnown.clicked.connect(self.viscosity_known)
+        self.ui.KinViscKnown.clicked.connect(self.viscosity_known)
+        self.ui.VelocityKnown.clicked.connect(self.flow_or_velocity_known)
+        self.ui.FlowRateKnown.clicked.connect(self.flow_or_velocity_known)
 
     def line_length_start(self):
         self.line_length.value_str = self.ui.Line_Length.text()
@@ -206,131 +206,130 @@ class MainWindowExec:
         self.calc.calculate_start()
         self.output()
 
-    def leiding_wandruwheid_start(self):
-        self.leiding_wandruwheid.waarde_str = self.ui.Leiding_Wandruwheid.text()
-        self.reken.wandruwheid = self.leiding_wandruwheid.test_invoer()
-        self.reken.wandruwheid_ok = self.leiding_wandruwheid.invoer_ok
-        self.ui.Leiding_Wandruwheid.setStyleSheet(self.leiding_wandruwheid.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def line_wallroughness_start(self):
+        self.line_roughness.value_str = self.ui.Line_WallRoughness.text()
+        self.calc.roughness = self.line_roughness.test_input()
+        self.calc.roughness_ok = self.line_roughness.input_ok
+        self.ui.Line_WallRoughness.setStyleSheet(self.line_roughness.style_string)
+        self.calc.calculate_start()
+        self.output()
 
-    def vloeistof_densiteit_start(self):
-        self.vloeistof_densiteit.waarde_str = self.ui.Vloeistof_Densiteit.text()
-        self.reken.densiteit = self.vloeistof_densiteit.test_invoer()
-        self.reken.densiteit_ok = self.vloeistof_densiteit.invoer_ok
-        self.ui.Vloeistof_Densiteit.setStyleSheet(self.vloeistof_densiteit.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def liquid_density_start(self):
+        self.liquid_density.value_str = self.ui.Liquid_Density.text()
+        self.calc.density = self.liquid_density.test_input()
+        self.calc.density_ok = self.liquid_density.input_ok
+        self.ui.Liquid_Density.setStyleSheet(self.liquid_density.style_string)
+        self.calc.calculate_start()
+        self.output()
 
-    def vloeistof_viscdyn_start(self):
-        self.vloeistof_viscdyn.waarde_str = self.ui.Vloeistof_ViscDyn.text()
-        self.reken.dyn_visc = self.vloeistof_viscdyn.test_invoer()
-        self.reken.dyn_visc_ok = self.vloeistof_viscdyn.invoer_ok
-        self.ui.Vloeistof_ViscDyn.setStyleSheet(self.vloeistof_viscdyn.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def liquid_viscdyn_start(self):
+        self.liquid_viscdyn.value_str = self.ui.Liquid_ViscDyn.text()
+        self.calc.dynamic_viscosity = self.liquid_viscdyn.test_input()
+        self.calc.dynamic_viscosity_ok = self.liquid_viscdyn.input_ok
+        self.ui.Liquid_ViscDyn.setStyleSheet(self.liquid_viscdyn.style_string)
+        self.calc.calculate_start()
+        self.output()
 
-    def vloeistof_visckin_start(self):
-        self.vloeistof_visckin.waarde_str = self.ui.Vloeistof_ViscKin.text()
-        self.reken.kin_visc = self.vloeistof_visckin.test_invoer()
-        self.reken.kin_visc_ok = self.vloeistof_visckin.invoer_ok
-        self.ui.Vloeistof_ViscKin.setStyleSheet(self.vloeistof_visckin.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def liquid_visckin_start(self):
+        self.liquid_visckin.value_str = self.ui.Liquid_ViscKin.text()
+        self.calc.kinematic_viscosity = self.liquid_visckin.test_input()
+        self.calc.kinematic_viscosity_ok = self.liquid_visckin.input_ok
+        self.ui.Liquid_ViscKin.setStyleSheet(self.liquid_visckin.style_string)
+        self.calc.calculate_start()
+        self.output()
 
-    def stroming_snelheid_start(self):
-        self.stroming_snelheid.waarde_str = self.ui.Stroming_Snelheid.text()
-        self.reken.snelheid = self.stroming_snelheid.test_invoer()
-        self.reken.snelheid_ok = self.stroming_snelheid.invoer_ok
-        self.ui.Stroming_Snelheid.setStyleSheet(self.stroming_snelheid.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def liquid_velocity_start(self):
+        self.flow_velocity.value_str = self.ui.Flow_Velocity.text()
+        self.calc.velocity = self.flow_velocity.test_input()
+        self.calc.velocity_ok = self.flow_velocity.input_ok
+        self.ui.Flow_Velocity.setStyleSheet(self.flow_velocity.style_string)
+        self.calc.calculate_start()
+        self.output()
 
-    def stroming_debiet_start(self):
-        self.stroming_debiet.waarde_str = self.ui.Stroming_Debiet.text()
-        self.reken.debiet = self.stroming_debiet.test_invoer()
-        self.reken.debiet_ok = self.stroming_debiet.invoer_ok
-        self.ui.Stroming_Debiet.setStyleSheet(self.stroming_debiet.stijl_string)
-        self.reken.berekenen_start()
-        self.uitvoer()
+    def flow_rate_start(self):
+        self.flow_rate.value_str = self.ui.Flow_Rate.text()
+        self.calc.flow_rate = self.flow_rate.test_input()
+        self.calc.flow_rate_ok = self.flow_rate.input_ok
+        self.ui.Flow_Rate.setStyleSheet(self.flow_rate.style_string)
+        self.calc.calculate_start()
+        self.output()
 
-    def visc_bekend(self):
-        if self.ui.DynVisBekend.isChecked():
-            self.ui.Vloeistof_ViscDyn.setEnabled(True)
-            self.ui.Vloeistof_ViscKin.setEnabled(False)
-            self.reken.dynvisc_actief = True
+    def viscosity_known(self):
+        if self.ui.DynVisKnown.isChecked():
+            self.ui.Liquid_ViscDyn.setEnabled(True)
+            self.ui.Liquid_ViscKin.setEnabled(False)
+            self.calc.dynamic_viscosity_active = True
         else:
-            self.ui.Vloeistof_ViscDyn.setEnabled(False)
-            self.ui.Vloeistof_ViscKin.setEnabled(True)
-            self.reken.dynvisc_actief = False
+            self.ui.Liquid_ViscDyn.setEnabled(False)
+            self.ui.Liquid_ViscKin.setEnabled(True)
+            self.calc.dynamic_viscosity_active = False
 
-    def stromingtype_bekend(self):
-        if self.ui.SnelheidBekend.isChecked():
-            self.ui.Stroming_Snelheid.setEnabled(True)
-            self.ui.Stroming_Debiet.setEnabled(False)
-            self.reken.snelheid_actief = True
+    def flow_or_velocity_known(self):
+        if self.ui.VelocityKnown.isChecked():
+            self.ui.Flow_Velocity.setEnabled(True)
+            self.ui.Flow_Rate.setEnabled(False)
+            self.calc.velocity_active = True
         else:
-            self.ui.Stroming_Snelheid.setEnabled(False)
-            self.ui.Stroming_Debiet.setEnabled(True)
-            self.reken.snelheid_actief = False
+            self.ui.Flow_Velocity.setEnabled(False)
+            self.ui.Flow_Rate.setEnabled(True)
+            self.calc.velocity_active = False
 
     def output(self):
-        # formatteren van invoervelden, na een invoer
-        if self.reken.lengte_ok:
-            self.ui.Leiding_Lengte.setText(f'{self.reken.lengte:.4e}')
+        # format line edit after input
+        if self.calc.length_ok:
+            self.ui.Line_Length.setText(f'{self.calc.length:.4e}')
 
-        if self.reken.diameter_ok:
-            self.ui.Leiding_Diameter.setText(f'{self.reken.diameter:.4e}')
+        if self.calc.diameter_ok:
+            self.ui.Line_Diameter.setText(f'{self.calc.diameter:.4e}')
 
-        if self.reken.wandruwheid_ok:
-            self.ui.Leiding_Wandruwheid.setText(f'{self.reken.wandruwheid:.4e}')
+        if self.calc.roughness_ok:
+            self.ui.Line_WallRoughness.setText(f'{self.calc.roughness:.4e}')
 
-        if self.reken.densiteit_ok:
-            self.ui.Vloeistof_Densiteit.setText(f'{self.reken.densiteit:.4e}')
+        if self.calc.density_ok:
+            self.ui.Liquid_Density.setText(f'{self.calc.density:.4e}')
 
-        if self.reken.dyn_visc_ok:
-            self.ui.Vloeistof_ViscDyn.setText(f'{self.reken.dyn_visc:.4e}')
+        if self.calc.dynamic_viscosity_ok:
+            self.ui.Liquid_ViscDyn.setText(f'{self.calc.dynamic_viscosity:.4e}')
 
-        if self.reken.kin_visc_ok:
-            self.ui.Vloeistof_ViscKin.setText(f'{self.reken.kin_visc:.4e}')
+        if self.calc.kinematic_viscosity_ok:
+            self.ui.Liquid_ViscKin.setText(f'{self.calc.kinematic_viscosity:.4e}')
 
-        if self.reken.snelheid_ok:
-            self.ui.Stroming_Snelheid.setText(f'{self.reken.snelheid:.4e}')
+        if self.calc.velocity_ok:
+            self.ui.Flow_Velocity.setText(f'{self.calc.velocity:.4e}')
         else:
-            if not self.reken.snelheid_actief:
-                self.ui.Stroming_Snelheid.setText('')
+            if not self.calc.velocity_active:
+                self.ui.Flow_Velocity.setText('')
 
-        if self.reken.debiet_ok:
-            self.ui.Stroming_Debiet.setText(f'{self.reken.debiet:.4e}')
+        if self.calc.flow_rate_ok:
+            self.ui.Flow_Rate.setText(f'{self.calc.flow_rate:.4e}')
         else:
-            if self.reken.snelheid_actief:
-                self.ui.Stroming_Debiet.setText('')
+            if self.calc.velocity_active:
+                self.ui.Flow_Rate.setText('')
 
-        # Uitvoer velden
-        if self.reken.inhoud_ok:
-            self.ui.Uitvoer_Leiding_Diameter.setText(f'{self.reken.inhoud:.4e}')
+        # Output fields
+        if self.calc.volume_ok:
+            self.ui.Output_LineVolume.setText(f'{self.calc.volume:.4e}')
         else:
-            self.ui.Uitvoer_Leiding_Diameter.setText('Niet Bekend')
+            self.ui.Output_LineVolume.setText('Unknown')
 
-        if self.reken.reynolds_getal_ok:
-            self.ui.Uitvoer_Reynolds.setText(f'{self.reken.reynolds_getal:.4e}')
+        if self.calc.reynolds_number_ok:
+            self.ui.Output_Reynolds.setText(f'{self.calc.reynolds_number:.4e}')
         else:
-            self.ui.Uitvoer_Reynolds.setText('Niet Bekend')
+            self.ui.Output_Reynolds.setText('Unknown')
 
-        if self.reken.drukverschil_ok:
-            self.ui.Uitvoer_Drukverschil.setText(f'{self.reken.drukverschil:.4e}')
+        if self.calc.pressure_drop_ok:
+            self.ui.Output_PressureDrop.setText(f'{self.calc.pressure_drop:.4e}')
         else:
-            self.ui.Uitvoer_Drukverschil.setText('Niet Bekend')
+            self.ui.Output_PressureDrop.setText('Unknown')
 
-        if self.reken.frictie_factor_ok:
-            self.ui.Uitvoer_FrictieFactor.setText(f'{self.reken.frictie_factor:.4e}')
+        if self.calc.friction_factor_ok:
+            self.ui.Output_FrictionFactor.setText(f'{self.calc.friction_factor:.4e}')
         else:
-            self.ui.Uitvoer_FrictieFactor.setText('Niet Bekend')
+            self.ui.Output_FrictionFactor.setText('Unknown')
 
-        self.ui.Uitvoer_TypeStroming.setText(self.reken.stroming_type)
-        self.ui.Uitvoer_TypeLeiding.setText(self.reken.leiding_ruwheid)
-        self.ui.Uitvoer_Methode.setText(self.reken.rekenmethode)
-
+        self.ui.Output_FlowRegime.setText(self.calc.flow_regime)
+        self.ui.OUtput_ConduitType.setText(self.calc.type_of_conduit)
+        self.ui.Output_CalcMethod.setText(self.calc.method)
 
 
 if __name__ == "__main__":
