@@ -3,6 +3,7 @@ import math
 from PyQt5 import QtWidgets
 from scipy.optimize import brentq
 from PresDr import Ui_MainWindow
+from PD_Dialog_helpabout import Ui_Dialog
 
 
 class Calculate:
@@ -133,7 +134,7 @@ class Calculate:
             self.pressure_drop_ok = False
 
 
-class Check_Input:
+class CheckInput:
     def __init__(self):
         self.value_str = None
         self.value_float = None
@@ -162,14 +163,14 @@ class MainWindowExec:
 
         # objects
         self.calc = Calculate()
-        self.line_length = Check_Input()
-        self.line_diameter = Check_Input()
-        self.line_roughness = Check_Input()
-        self.liquid_density = Check_Input()
-        self.liquid_viscdyn = Check_Input()
-        self.liquid_visckin = Check_Input()
-        self.flow_velocity = Check_Input()
-        self.flow_rate = Check_Input()
+        self.line_length = CheckInput()
+        self.line_diameter = CheckInput()
+        self.line_roughness = CheckInput()
+        self.liquid_density = CheckInput()
+        self.liquid_viscdyn = CheckInput()
+        self.liquid_visckin = CheckInput()
+        self.flow_velocity = CheckInput()
+        self.flow_rate = CheckInput()
 
         self.calculation_start()
 
@@ -189,6 +190,7 @@ class MainWindowExec:
         self.ui.KinViscKnown.clicked.connect(self.viscosity_known)
         self.ui.VelocityKnown.clicked.connect(self.flow_or_velocity_known)
         self.ui.FlowRateKnown.clicked.connect(self.flow_or_velocity_known)
+        self.ui.actionAbout.triggered.connect(self.help_about)
 
     def line_length_start(self):
         self.line_length.value_str = self.ui.Line_Length.text()
@@ -330,6 +332,13 @@ class MainWindowExec:
         self.ui.Output_FlowRegime.setText(self.calc.flow_regime)
         self.ui.OUtput_ConduitType.setText(self.calc.type_of_conduit)
         self.ui.Output_CalcMethod.setText(self.calc.method)
+
+    def help_about(self):
+        Dialog = QtWidgets.QDialog()
+        ui = Ui_Dialog()
+        ui.setupUi(Dialog)
+        Dialog.show()
+        Dialog.exec_()
 
 
 if __name__ == "__main__":
