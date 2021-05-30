@@ -3,7 +3,7 @@ import math
 from PyQt5 import QtWidgets
 from scipy.optimize import brentq
 from PresDr import Ui_MainWindow
-from PD_Dialog_helpabout import Ui_Dialog
+from PD_Dialog import Ui_Dialog
 
 
 class Calculate:
@@ -153,6 +153,29 @@ class CheckInput:
             return self.value_float
 
 
+class DialogGeneral:
+    def __init__(self):
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self.Dialog)
+
+    def question(self, title, text):
+        self.Dialog.setWindowTitle(title)
+        self.ui.label.setText(text)
+        self.Dialog.show()
+        if self.Dialog.exec_():
+            return True
+        else:
+            return False
+
+    def remark(self, title, text):
+        self.Dialog.setWindowTitle(title)
+        self.ui.label.setText(text)
+        self.ui.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
+        self.Dialog.show()
+        self.Dialog.exec_()
+
+
 class MainWindowExec:
     def __init__(self):
         app = QtWidgets.QApplication(sys.argv)
@@ -171,9 +194,8 @@ class MainWindowExec:
         self.liquid_visckin = CheckInput()
         self.flow_velocity = CheckInput()
         self.flow_rate = CheckInput()
-
+        self.dialog_general = DialogGeneral()
         self.calculation_start()
-
         mainwindow.show()
         sys.exit(app.exec_())
 
@@ -334,11 +356,13 @@ class MainWindowExec:
         self.ui.Output_CalcMethod.setText(self.calc.method)
 
     def help_about(self):
-        Dialog = QtWidgets.QDialog()
-        ui = Ui_Dialog()
-        ui.setupUi(Dialog)
-        Dialog.show()
-        Dialog.exec_()
+        self.dialog_general.remark('Help About', "<html><head/><body><p align=\"center\"><span style=\" "
+                                                 "font-size:14pt; font-weight:600;\">"
+                                                 "Pressure Drop</span></p><p><br/></p><p>A "
+                                                 "simple pressure drop calculator written in Python</p><p>"
+                                                 "Author: Frans van Genesen<br/>Date: May 22 - 2021</p><p>"
+                                                 "Version 1.0</p><p><br/></p><p>"
+                                                 "License: GNU GENERAL PUBLIC LICENSE Version 3</p></body></html>")
 
 
 if __name__ == "__main__":
