@@ -16,10 +16,14 @@ Reformatting the line input field by code is to be avoided for this leads to the
 in- and output on the same screen which is possible since the amount of data is not very big. Each line edit will have a
 label which shows the reformatted input. 
 ## Improve
-A total revision of the user interface - to do  
-Change code PrControl.py:
-- Class MainWindowExec to be changed according to the new user interface todo
-- Class Calculate basically not to be changed consider subclasses - todo
+### User interface
+A total revision of the user interface: Groupbox "Input" added, containing all the input data in 
+scientific notation. The label fields have the name op the input fields with _4Calc added. Further no changes. 
+###Change code PrControl.py:
+- Class MainWindowExec to be changed according to the new user interface: output is sent to "4Calc" fields. revision of 
+  the methods triggered by line edit do not require any change. 
+- Add Class "warning" to communicate inconsistencies as roughness is greater than diameter - todo
+- Class Calculate basically not to be changed consider subclasses deal with roughness / diameter - todo
 - Class CheckInput - No change required
 - Class DialogGeneral - No change required
 ## Control

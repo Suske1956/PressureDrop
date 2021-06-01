@@ -301,34 +301,44 @@ class MainWindowExec:
     def output(self):
         # format line edit after input
         if self.calc.length_ok:
-            self.ui.Line_Length.setText(f'{self.calc.length:.4e}')
+            self.ui.Line_length_4Calc.setText(f'{self.calc.length:.4e}')
+        else:
+            self.ui.Line_length_4Calc.setText('Unknown')
 
         if self.calc.diameter_ok:
-            self.ui.Line_Diameter.setText(f'{self.calc.diameter:.4e}')
+            self.ui.Line_Diameter_4Calc.setText(f'{self.calc.diameter:.4e}')
+        else:
+            self.ui.Line_Diameter_4Calc.setText('Unknown')
 
         if self.calc.roughness_ok:
-            self.ui.Line_WallRoughness.setText(f'{self.calc.roughness:.4e}')
+            self.ui.Line_WallRoughness_4Calc.setText(f'{self.calc.roughness:.4e}')
+        else:
+            self.ui.Line_WallRoughness_4Calc.setText('Unknown')
 
         if self.calc.density_ok:
-            self.ui.Liquid_Density.setText(f'{self.calc.density:.4e}')
+            self.ui.Liquid_Density_4Calc.setText(f'{self.calc.density:.4e}')
+        else:
+            self.ui.Liquid_Density_4Calc.setText('Unknown')
 
         if self.calc.dynamic_viscosity_ok:
-            self.ui.Liquid_ViscDyn.setText(f'{self.calc.dynamic_viscosity:.4e}')
+            self.ui.Liquid_ViscDyn_4Calc.setText(f'{self.calc.dynamic_viscosity:.4e}')
+        else:
+            self.ui.Liquid_ViscDyn_4Calc.setText('Unknown')
 
         if self.calc.kinematic_viscosity_ok:
-            self.ui.Liquid_ViscKin.setText(f'{self.calc.kinematic_viscosity:.4e}')
+            self.ui.Liquid_ViscKin_4Calc.setText(f'{self.calc.kinematic_viscosity:.4e}')
+        else:
+            self.ui.Liquid_ViscKin_4Calc.setText('Unknown')
 
         if self.calc.velocity_ok:
-            self.ui.Flow_Velocity.setText(f'{self.calc.velocity:.4e}')
+            self.ui.Flow_Velocity_4Calc.setText(f'{self.calc.velocity:.4e}')
         else:
-            if not self.calc.velocity_active:
-                self.ui.Flow_Velocity.setText('')
+            self.ui.Flow_Velocity_4Calc.setText('Unknown')
 
         if self.calc.flow_rate_ok:
-            self.ui.Flow_Rate.setText(f'{self.calc.flow_rate:.4e}')
+            self.ui.Flow_Rate_4Calc.setText(f'{self.calc.flow_rate:.4e}')
         else:
-            if self.calc.velocity_active:
-                self.ui.Flow_Rate.setText('')
+            self.ui.Flow_Rate_4Calc.setText('Unknown')
 
         # Output fields
         if self.calc.volume_ok:
