@@ -22,7 +22,11 @@ scientific notation. The label fields have the name op the input fields with _4C
 ###Change code PrControl.py:
 - Class MainWindowExec to be changed according to the new user interface: output is sent to "4Calc" fields. revision of 
   the methods triggered by line edit do not require any change. 
-- Add Class "warning" to communicate inconsistencies as roughness is greater than diameter - todo
+- Add Class "warning" to communicate inconsistencies as roughness is greater than diameter - Reading the documentation 
+  of QDialog gave the insight that the module PD_Dialog.py is overdone to show messages in pyqt5. QMessagebox gives 
+  enough functionality for this job. A new class Messages is introduced making PD_Dialog and class DialogGeneral 
+  obsolete for now a message, and a warning are added to the class. This class is to be extended and probably to be 
+  moved to a module. A message is already introduced at roughness and diameter
 - Class Calculate basically not to be changed consider subclasses deal with roughness / diameter - todo
 - Class CheckInput - No change required
 - Class DialogGeneral - No change required

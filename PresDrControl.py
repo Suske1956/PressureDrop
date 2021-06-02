@@ -3,7 +3,6 @@ import math
 from PyQt5 import QtWidgets
 from scipy.optimize import brentq
 from PresDr import Ui_MainWindow
-from PD_Dialog import Ui_Dialog
 
 
 class Calculate:
@@ -153,27 +152,20 @@ class CheckInput:
             return self.value_float
 
 
-class DialogGeneral:
+class Messages:
     def __init__(self):
-        self.Dialog = QtWidgets.QDialog()
-        self.ui = Ui_Dialog()
-        self.ui.setupUi(self.Dialog)
+        self.popup = QtWidgets.QMessageBox()
 
-    def question(self, title, text):
-        self.Dialog.setWindowTitle(title)
-        self.ui.label.setText(text)
-        self.Dialog.show()
-        if self.Dialog.exec_():
-            return True
-        else:
-            return False
+    def message(self, title, text):
+        self.popup.setText(text)
+        self.popup.setWindowTitle(title)
+        self.popup.show()
 
-    def remark(self, title, text):
-        self.Dialog.setWindowTitle(title)
-        self.ui.label.setText(text)
-        self.ui.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
-        self.Dialog.show()
-        self.Dialog.exec_()
+    def warning(self, title, text):
+        self.popup.setIcon(QtWidgets.QMessageBox.Warning)
+        self.popup.setText(text)
+        self.popup.setWindowTitle(title)
+        self.popup.show()
 
 
 class MainWindowExec:
@@ -194,7 +186,8 @@ class MainWindowExec:
         self.liquid_visckin = CheckInput()
         self.flow_velocity = CheckInput()
         self.flow_rate = CheckInput()
-        self.dialog_general = DialogGeneral()
+        self.messages = Messages()
+
         self.calculation_start()
         mainwindow.show()
         sys.exit(app.exec_())
@@ -227,6 +220,7 @@ class MainWindowExec:
         self.calc.diameter = self.line_diameter.test_input()
         self.calc.diameter_ok = self.line_diameter.input_ok
         self.ui.Line_Diameter.setStyleSheet(self.line_diameter.style_string)
+        self.messages.warning('let op!', 'De diameter mag niet kleiner dan de ruwheid zijn.')
         self.calc.calculate_start()
         self.output()
 
@@ -235,6 +229,7 @@ class MainWindowExec:
         self.calc.roughness = self.line_roughness.test_input()
         self.calc.roughness_ok = self.line_roughness.input_ok
         self.ui.Line_WallRoughness.setStyleSheet(self.line_roughness.style_string)
+        self.messages.warning('let op!', 'De diameter mag niet kleiner dan de ruwheid zijn.')
         self.calc.calculate_start()
         self.output()
 
@@ -366,7 +361,8 @@ class MainWindowExec:
         self.ui.Output_CalcMethod.setText(self.calc.method)
 
     def help_about(self):
-        self.dialog_general.remark('Help About', "<html><head/><body><p align=\"center\"><span style=\" "
+        # dialog_general.remark
+        self.messages.message('Help About', "<html><head/><body><p align=\"center\"><span style=\" "
                                                  "font-size:14pt; font-weight:600;\">"
                                                  "Pressure Drop</span></p><p><br/></p><p>A "
                                                  "simple pressure drop calculator written in Python</p><p>"
