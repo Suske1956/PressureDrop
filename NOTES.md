@@ -27,8 +27,13 @@ scientific notation. The label fields have the name op the input fields with _4C
   enough functionality for this job. A new class Messages is introduced making PD_Dialog and class DialogGeneral 
   obsolete for now a message, and a warning are added to the class. This class is to be extended and probably to be 
   moved to a module. A message is already introduced at roughness and diameter
-- Class Calculate basically not to be changed consider subclasses deal with roughness / diameter - todo
+- Deal with input error diameter < roughness - Method Calculate-calculate_friction_factor updated to deal with the error
+  and give the correct output. Class calc calculation methods started in right sequence by calculation_start() which is 
+  called by gui. number arguments zero instead of none. some bugs eliminated each method checks its own prerequisites. 
+  Class calc can stand on its own now. Warning message in line_diameter_start() and line_roughness_start() 
+- Class Calculate basically not to be changed consider subclasses - better not to have subclasses since all the args 
+  remain in one class/object. Class Calculation is beneficial for it can work wit a cli as well. 
 - Class CheckInput - No change required
-- Class DialogGeneral - No change required
+- Class DialogGeneral - Not required anymore
 ## Control
 testing to be defined

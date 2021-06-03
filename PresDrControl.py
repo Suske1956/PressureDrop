@@ -8,38 +8,44 @@ from PresDr import Ui_MainWindow
 class Calculate:
     # class variables
     def __init__(self):
-        self.length = None
+        self.length = 0
         self.length_ok = False
-        self.diameter = None
+        self.diameter = 0
         self.diameter_ok = False
-        self.roughness = None
+        self.roughness = 0
         self.roughness_ok = False
-        self.density = None
+        self.density = 0
         self.density_ok = False
-        self.dynamic_viscosity = None
+        self.dynamic_viscosity = 0
         self.dynamic_viscosity_ok = False
-        self.kinematic_viscosity = None
+        self.kinematic_viscosity = 0
         self.kinematic_viscosity_ok = False
-        self.velocity = None
+        self.velocity = 0
         self.velocity_ok = False
-        self.flow_rate = None
+        self.flow_rate = 0
         self.flow_rate_ok = False
-        self.volume = None
+        self.volume = 0
         self.volume_ok = False
-        self.reynolds_number = None
+        self.reynolds_number = 0
         self.reynolds_number_ok = False
         self.flow_regime = 'Unknown'
         self.velocity_active = True
         self.dynamic_viscosity_active = True
         self.type_of_conduit = 'Unknown'
         self.line_smooth = False
-        self.friction_factor = None
+        self.friction_factor = 0
         self.friction_factor_ok = False
-        self.pressure_drop = None
+        self.pressure_drop = 0
         self.pressure_drop_ok = False
         self.method = 'Unknown'
 
     def calculate_start(self):
+        self.prerequisites()
+        self.determine_relative_roughness()
+        self.calculate_friction_factor()
+        self.calculate_pressure_drop()
+
+    def prerequisites(self):
         # convert velocity into flow rate vice versa triggered by the radio buttons
         if self.velocity_active:
             if self.diameter_ok and self.velocity_ok:
@@ -79,8 +85,6 @@ class Calculate:
         if self.diameter_ok and self.kinematic_viscosity_ok and self.velocity_ok:
             self.reynolds_number = (self.velocity * self.diameter) / self.kinematic_viscosity
             self.reynolds_number_ok = True
-            self.determine_relative_roughness()
-            self.calculate_friction_factor()
             if self.reynolds_number < 2320:
                 self.flow_regime = 'Laminar'
             else:
@@ -90,7 +94,7 @@ class Calculate:
             self.flow_regime = 'Unknown'
 
     def determine_relative_roughness(self):
-        if self.reynolds_number and self.diameter_ok and self.roughness_ok:
+        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok:
             if self.reynolds_number * self.roughness / self.diameter < 65:
                 self.type_of_conduit = 'Smooth conduit'
                 self.line_smooth = True
@@ -108,7 +112,7 @@ class Calculate:
         return (1 / math.sqrt(x)) + 2 * math.log10((roughness / (3.7 * diameter)) + 2.51 / (reynolds * math.sqrt(x)))
 
     def calculate_friction_factor(self):
-        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok:
+        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok and self.roughness < self.diameter:
             if self.reynolds_number < 2320 and self.line_smooth:
                 self.friction_factor = 64/self.reynolds_number
                 self.friction_factor_ok = True
@@ -122,7 +126,9 @@ class Calculate:
                     self.diameter, self.roughness, self.reynolds_number))
                 self.friction_factor_ok = True
                 self.method = 'Colebrook White'
-            self.calculate_pressure_drop()
+        else:
+            self.friction_factor_ok = False
+            self.method = 'Unknown'
 
     def calculate_pressure_drop(self):
         if self.friction_factor_ok and self.length_ok and self.diameter_ok and self.velocity_ok and self.density_ok:
@@ -188,11 +194,11 @@ class MainWindowExec:
         self.flow_rate = CheckInput()
         self.messages = Messages()
 
-        self.calculation_start()
+        self.start_methods()
         mainwindow.show()
         sys.exit(app.exec_())
 
-    def calculation_start(self):
+    def start_methods(self):
         self.ui.Line_Length.editingFinished.connect(self.line_length_start)
         self.ui.Line_Diameter.editingFinished.connect(self.line_diameter_start)
         self.ui.Line_WallRoughness.editingFinished.connect(self.line_wallroughness_start)
@@ -220,7 +226,8 @@ class MainWindowExec:
         self.calc.diameter = self.line_diameter.test_input()
         self.calc.diameter_ok = self.line_diameter.input_ok
         self.ui.Line_Diameter.setStyleSheet(self.line_diameter.style_string)
-        self.messages.warning('let op!', 'De diameter mag niet kleiner dan de ruwheid zijn.')
+        if self.calc.roughness >= self.calc.diameter:
+            self.messages.warning('Input inconsistency!', 'Roughness must be smaller than Diameter')
         self.calc.calculate_start()
         self.output()
 
@@ -229,7 +236,8 @@ class MainWindowExec:
         self.calc.roughness = self.line_roughness.test_input()
         self.calc.roughness_ok = self.line_roughness.input_ok
         self.ui.Line_WallRoughness.setStyleSheet(self.line_roughness.style_string)
-        self.messages.warning('let op!', 'De diameter mag niet kleiner dan de ruwheid zijn.')
+        if self.calc.roughness >= self.calc.diameter:
+            self.messages.warning('Input inconsistency!', 'Roughness must be smaller than Diameter')
         self.calc.calculate_start()
         self.output()
 
