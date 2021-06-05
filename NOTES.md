@@ -36,4 +36,4 @@ scientific notation. The label fields have the name op the input fields with _4C
 - Class CheckInput - No change required
 - Class DialogGeneral - Not required anymore
 ## Control
-testing to be defined
+See V1.0_tests.md

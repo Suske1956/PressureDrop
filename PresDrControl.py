@@ -142,7 +142,7 @@ class Calculate:
 class CheckInput:
     def __init__(self):
         self.value_str = None
-        self.value_float = None
+        self.value_float = 0
         self.input_ok = False
         self.style_string = 'background-color: red;'
 
@@ -155,7 +155,7 @@ class CheckInput:
         else:
             self.input_ok = True
             self.style_string = 'background-color: white;'
-            return self.value_float
+        return self.value_float
 
 
 class Messages:
