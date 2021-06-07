@@ -167,7 +167,6 @@ class CheckInput:
                 self.style_string = 'background-color: white;'
                 if self.value_float > 0:
                     self.input_ok = True
-                    self.message = ''
                     return self.value_float
                 else:
                     self.input_ok = False
@@ -175,6 +174,7 @@ class CheckInput:
                     return 0
         else:
             return 0
+
 
 class Messages:
     def __init__(self):
@@ -327,7 +327,6 @@ class MainWindowExec:
             self.ui.Flow_Rate.setFocus()
             self.flow_rate_start()
 
-
     def output(self):
         # format line edit after input
         if self.calc.length_ok:
@@ -403,7 +402,7 @@ class MainWindowExec:
                                                  "font-size:14pt; font-weight:600;\">"
                                                  "SiPreDroCal</span></p><p><br/></p><p>A "
                                                  "simple pressure drop calculator written in Python</p><p>"
-                                                 "Author: Frans van Genesen<br/>Date: May 22 - 2021</p><p>"
+                                                 "Author: Frans van Genesen<br/>Date: June 07, 2021</p><p>"
                                                  "Version 1.0</p><p><br/></p><p>"
                                                  "License: GNU GENERAL PUBLIC LICENSE Version 3</p></body></html>")
 
