@@ -45,6 +45,10 @@ class Calculate:
         self.calculate_friction_factor()
         self.calculate_pressure_drop()
 
+    @staticmethod
+    def colebrook_white(x, diameter, roughness, reynolds):
+        return (1 / math.sqrt(x)) + 2 * math.log10((roughness / (3.7 * diameter)) + 2.51 / (reynolds * math.sqrt(x)))
+
     def prerequisites(self):
         # convert velocity into flow rate vice versa triggered by the radio buttons
         if self.velocity_active:
@@ -54,7 +58,7 @@ class Calculate:
             else:
                 self.flow_rate_ok = False
         else:
-            if self.diameter_ok and self.flow_rate_ok:
+            if self.diameter_ok and self.flow_rate_ok and self.diameter > 0:
                 self.velocity = self.flow_rate / (math.pow(self.diameter / 2, 2) * math.pi)
                 self.velocity_ok = True
             else:
@@ -62,7 +66,7 @@ class Calculate:
 
         # convert kinematic into dynamic viscosity vice versa triggered by the radio buttons.
         if self.dynamic_viscosity_active:
-            if self.density_ok and self.dynamic_viscosity_ok:
+            if self.density_ok and self.dynamic_viscosity_ok and self.density > 0:
                 self.kinematic_viscosity = self.dynamic_viscosity / self.density
                 self.kinematic_viscosity_ok = True
             else:
@@ -82,7 +86,7 @@ class Calculate:
             self.volume_ok = False
 
         # Calculate Reynolds number
-        if self.diameter_ok and self.kinematic_viscosity_ok and self.velocity_ok:
+        if self.diameter_ok and self.kinematic_viscosity_ok and self.velocity_ok and self.kinematic_viscosity > 0:
             self.reynolds_number = (self.velocity * self.diameter) / self.kinematic_viscosity
             self.reynolds_number_ok = True
             if self.reynolds_number < 2320:
@@ -94,7 +98,7 @@ class Calculate:
             self.flow_regime = 'Unknown'
 
     def determine_relative_roughness(self):
-        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok:
+        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok and self.diameter > 0:
             if self.reynolds_number * self.roughness / self.diameter < 65:
                 self.type_of_conduit = 'Smooth conduit'
                 self.line_smooth = True
@@ -107,12 +111,9 @@ class Calculate:
         else:
             self.type_of_conduit = 'Unknown'
 
-    @staticmethod
-    def colebrook_white(x, diameter, roughness, reynolds):
-        return (1 / math.sqrt(x)) + 2 * math.log10((roughness / (3.7 * diameter)) + 2.51 / (reynolds * math.sqrt(x)))
-
     def calculate_friction_factor(self):
-        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok and self.roughness < self.diameter:
+        if self.reynolds_number_ok and self.diameter_ok and self.roughness_ok and 0 < self.roughness < self.diameter \
+                and self.reynolds_number > 0:
             if self.reynolds_number < 2320 and self.line_smooth:
                 self.friction_factor = 64/self.reynolds_number
                 self.friction_factor_ok = True
@@ -131,7 +132,8 @@ class Calculate:
             self.method = 'Unknown'
 
     def calculate_pressure_drop(self):
-        if self.friction_factor_ok and self.length_ok and self.diameter_ok and self.velocity_ok and self.density_ok:
+        if self.friction_factor_ok and self.length_ok and self.diameter_ok and self.velocity_ok and self.density_ok \
+                and self. diameter > 0 and self.density > 0 and self.velocity > 0:
             self.pressure_drop = self.friction_factor * self.length /\
                                 self.diameter * self.density / 2 * self.velocity ** 2
             self.pressure_drop_ok = True
@@ -144,19 +146,35 @@ class CheckInput:
         self.value_str = None
         self.value_float = 0
         self.input_ok = False
-        self.style_string = 'background-color: red;'
+        self.style_string = 'background-color: white;'
+        self.popup = QtWidgets.QMessageBox()
+
+    def errormessage(self, text):
+        self.popup.setText(text)
+        self.popup.setWindowTitle('Input Error')
+        self.popup.show()
 
     def test_input(self):
-        try:
-            self.value_float = float(self.value_str)
-        except ValueError:
-            self.input_ok = False
-            self.style_string = 'background-color: red;'
+        if self.value_str != '':
+            try:
+                self.value_float = float(self.value_str)
+            except ValueError:
+                self.input_ok = False
+                self.style_string = 'background-color: red;'
+                self.errormessage('The input cannot be converted to a number')
+                return 0
+            else:
+                self.style_string = 'background-color: white;'
+                if self.value_float > 0:
+                    self.input_ok = True
+                    self.message = ''
+                    return self.value_float
+                else:
+                    self.input_ok = False
+                    self.errormessage('The input must be larger than 0')
+                    return 0
         else:
-            self.input_ok = True
-            self.style_string = 'background-color: white;'
-        return self.value_float
-
+            return 0
 
 class Messages:
     def __init__(self):
@@ -205,7 +223,7 @@ class MainWindowExec:
         self.ui.Liquid_Density.editingFinished.connect(self.liquid_density_start)
         self.ui.Liquid_ViscDyn.editingFinished.connect(self.liquid_viscdyn_start)
         self.ui.Liquid_ViscKin.editingFinished.connect(self.liquid_visckin_start)
-        self.ui.Flow_Velocity.editingFinished.connect(self.liquid_velocity_start)
+        self.ui.Flow_Velocity.editingFinished.connect(self.flow_velocity_start)
         self.ui.Flow_Rate.editingFinished.connect(self.flow_rate_start)
         self.ui.DynVisKnown.clicked.connect(self.viscosity_known)
         self.ui.KinViscKnown.clicked.connect(self.viscosity_known)
@@ -265,7 +283,7 @@ class MainWindowExec:
         self.calc.calculate_start()
         self.output()
 
-    def liquid_velocity_start(self):
+    def flow_velocity_start(self):
         self.flow_velocity.value_str = self.ui.Flow_Velocity.text()
         self.calc.velocity = self.flow_velocity.test_input()
         self.calc.velocity_ok = self.flow_velocity.input_ok
@@ -286,20 +304,29 @@ class MainWindowExec:
             self.ui.Liquid_ViscDyn.setEnabled(True)
             self.ui.Liquid_ViscKin.setEnabled(False)
             self.calc.dynamic_viscosity_active = True
+            self.ui.Liquid_ViscDyn.setFocus()
+            self.liquid_viscdyn_start()
         else:
             self.ui.Liquid_ViscDyn.setEnabled(False)
             self.ui.Liquid_ViscKin.setEnabled(True)
             self.calc.dynamic_viscosity_active = False
+            self.ui.Liquid_ViscKin.setFocus()
+            self.liquid_visckin_start()
 
     def flow_or_velocity_known(self):
         if self.ui.VelocityKnown.isChecked():
             self.ui.Flow_Velocity.setEnabled(True)
             self.ui.Flow_Rate.setEnabled(False)
             self.calc.velocity_active = True
+            self.ui.Flow_Velocity.setFocus()
+            self.flow_velocity_start()
         else:
             self.ui.Flow_Velocity.setEnabled(False)
             self.ui.Flow_Rate.setEnabled(True)
             self.calc.velocity_active = False
+            self.ui.Flow_Rate.setFocus()
+            self.flow_rate_start()
+
 
     def output(self):
         # format line edit after input
@@ -356,8 +383,10 @@ class MainWindowExec:
 
         if self.calc.pressure_drop_ok:
             self.ui.Output_PressureDrop.setText(f'{self.calc.pressure_drop:.4e}')
+            self.ui.Output_PressureDrop_bar.setText(f'{self.calc.pressure_drop / 100000:.4f}')
         else:
             self.ui.Output_PressureDrop.setText('Unknown')
+            self.ui.Output_PressureDrop_bar.setText('Unknown')
 
         if self.calc.friction_factor_ok:
             self.ui.Output_FrictionFactor.setText(f'{self.calc.friction_factor:.4e}')
@@ -372,7 +401,7 @@ class MainWindowExec:
         # dialog_general.remark
         self.messages.message('Help About', "<html><head/><body><p align=\"center\"><span style=\" "
                                                  "font-size:14pt; font-weight:600;\">"
-                                                 "Pressure Drop</span></p><p><br/></p><p>A "
+                                                 "SiPreDroCal</span></p><p><br/></p><p>A "
                                                  "simple pressure drop calculator written in Python</p><p>"
                                                  "Author: Frans van Genesen<br/>Date: May 22 - 2021</p><p>"
                                                  "Version 1.0</p><p><br/></p><p>"

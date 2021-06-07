@@ -37,3 +37,10 @@ scientific notation. The label fields have the name op the input fields with _4C
 - Class DialogGeneral - Not required anymore
 ## Control
 See V1.0_tests.md
+modifications based on the outcome of the tests:
+- Correction layout
+- Outcome in bar and in Pa
+- Fixed bug in class CheckInput
+- Improved behaviour of radio buttons
+- Class Calculate deals with divisions by zero and negative values
+- Modification class CheckInput: add error message. In case of an error always return 0. 
