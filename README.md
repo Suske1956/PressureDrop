@@ -1,7 +1,7 @@
 # SiPreDroCal  (Simple Pressure Drop Calculator)
 Version 1.0 June 7th, 2021
 
-Simple Pressure drop calculator programmed in Python
+Simple Pressure drop calculator programmed in Python  
 Licence: GNU General Public License v3.0
 
 Versions for programming an testing:  
