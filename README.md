@@ -15,6 +15,7 @@ on your platform.
 Start from cli with: python PresDrControl.py 
 
 The current version is very basic and presents values in SI units and scientific notation.  
+Calculation methods used: laminar flow, Blasius, Colebrook-White.  
 In future version I want to add additional output, and the possibility to include fittings. 
 
 I appreciate any suggestion.
