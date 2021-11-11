@@ -1,4 +1,5 @@
 __*
 .*
+temp_*
 pres_drop.db
 !.gitignore
