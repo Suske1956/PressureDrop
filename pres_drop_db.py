@@ -17,7 +17,14 @@ note: since name is unique name can be used to remove a specific record as well.
 """
 
 
-# constants - consider moving this section, or a part of it, to the user interface or its control.
+"""
+constants: consider changing the constants to make the database application more universal.
+Approach can be moving the constants to a class with parameters for:  
+database name       string
+table name          string
+fields              dictionary
+From these variables the class generates the variables below which makes the class reusable for other tables.   
+"""
 DB_NAME = "pres_drop.db"
 LIST_TABLES = """SELECT name FROM sqlite_master WHERE type='table';"""
 DROP_TABLE_FITTINGS = """DROP TABLE fittings"""
@@ -188,6 +195,7 @@ class DbOperations:
         return finish_code, records, error_text
 
 
+"""
 database = DbOperations()
 print(database.refresh_database())
 print(database.fitting_add("valve0", 12.5, "remarks"))
@@ -204,3 +212,4 @@ print(database.fitting_add("valve10", 12.5, "remarks"))
 print(database.fittings_list())
 print(database.fitting_remove(10))
 print(database.fittings_list())
+"""
