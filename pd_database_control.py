@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import pd_database
 import pd_database_record
 from pres_drop_db import DbOperations
+from pd_database_dialog import Ui_Dialog
 """
 control script to manage pres_drop.db from a PyQt5 widget.
 pd_database and pres_drop_db are inherited
@@ -28,6 +29,34 @@ class DatabaseOperations:
         error_code = fitting_lst[0]
         if error_code == 0:
             return fitting_lst[1]
+
+    def show_record(self, _id):
+        """
+        Get the data from row id _id
+        """
+        data_returned = self.db.fittings_get_one_record(_id)
+        return data_returned[1]
+
+
+class DialogShow(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(DialogShow, self).__init__(parent)
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
+    def view_record(self, _name, _factor, _notes):
+        self.ui.fitting_name.setEnabled(False)
+        self.ui.fitting_name.setText(_name)
+        self.ui.friction_factor.setEnabled(False)
+        self.ui.friction_factor.setText(_factor)
+        self.ui.fitting_note.setEnabled(False)
+        self.ui.fitting_note.setPlainText(_notes)
+        self.ui.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
+        self.ui.header.setText("View Record")
+        # self.ui.buttonBox.accepted.connect(self.ok_clicked)  # here not required
+
+    def ok_clicked(self):
+        print("ok clicked")
 
 
 class DbFormExec:
@@ -74,9 +103,19 @@ class DbFormExec:
     def show_item(self):
         """
         Shows the window pd_record.py with the data of the current item of the fittings list.
+        todo: implement error handling
         :return:
         """
-        # print(self.ui.list_fittings.currentItem().text())
+        row_chosen = int(self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 0).text())
+        data_returned = self.db.show_record(row_chosen)
+        _name = data_returned[1]
+        _factor = str(data_returned[2])
+        _notes = data_returned[3]
+
+        dialog = DialogShow()
+        dialog.view_record(_name, _factor, _notes)
+
+        dialog.exec()
 
     def add_item(self):
         pass

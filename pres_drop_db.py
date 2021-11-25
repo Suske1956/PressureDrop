@@ -37,6 +37,7 @@ FITTINGS_ADD_RECORD = """INSERT INTO fittings
                             VALUES (?, ?, ?);"""
 FITTINGS_DELETE_ONE_RECORD = """DELETE FROM fittings WHERE rowid = ?"""
 FITTINGS_GET_ALL_RECORDS = """SELECT rowid, * FROM fittings"""
+FITTINGS_GET_ONE_RECORD = """SELECT rowid, * FROM fittings WHERE rowid = ?"""
 
 
 class DbOperations:
@@ -194,9 +195,35 @@ class DbOperations:
                 conn.close()
         return finish_code, records, error_text
 
+    def fittings_get_one_record(self, row_id):
+        """
+        Reads one record from the table fittings with the row id given.
+        :return: a tuple of:  finish_code, record, error_text
+        finish code: 0 - no error; 1 - SQLite error
+        record: tuple - (rowid - integer, fitting name - string, friction factor - real, notes - string)
+        SQLiter error: error text - string
+        """
+        conn = None
+        finish_code = 0
+        error_text = "No error"
+        try:
+            conn = sqlite3.connect(self.db_name)
+            c = conn.cursor()
+            c.execute(FITTINGS_GET_ONE_RECORD, (str(row_id), ))
+            record = c.fetchone()
+            c.close()
+        except sqlite3.Error as error:
+            finish_code = 1
+            error_text = error
+        finally:
+            if conn:
+                conn.close()
+        return finish_code, record, error_text
+
 
 """
 database = DbOperations()
+print(database.fittings_get_one_record(1))
 print(database.refresh_database())
 print(database.fitting_add("valve0", 12.5, "remarks"))
 print(database.fitting_add("valve1", 12.5, "remarks"))
