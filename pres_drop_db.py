@@ -119,6 +119,7 @@ class DbOperations:
         name = name of the fitting. It should be unique - see constant CREATE_TABLE_FITTINGS.
         friction factor is a real number to be used in calculating the pressure drop.
         notes is a text field to store notes regarding the fitting.
+        both name and friction factor must be filled out to add the record.
         :param name: fitting name, string
         :param friction_factor: fitting friction factor, real
         :param notes: notes, string
@@ -127,20 +128,24 @@ class DbOperations:
         """
         conn = None
         add_tuple = (name, friction_factor, notes)
-        try:
-            conn = sqlite3.connect(self.db_name)
-            c = conn.cursor()
-            c.execute(FITTINGS_ADD_RECORD, add_tuple)
-            conn.commit()
-            c.close()
-            finish_code = 0
-            return_message = "record added successfully"
-        except sqlite3.Error as error:
+        if name == "" and friction_factor == "":
             finish_code = 1
-            return_message = error
-        finally:
-            if conn:
-                conn.close()
+            return_message = "fields name and fiction factor must be filled"
+        else:
+            try:
+                conn = sqlite3.connect(self.db_name)
+                c = conn.cursor()
+                c.execute(FITTINGS_ADD_RECORD, add_tuple)
+                conn.commit()
+                c.close()
+                finish_code = 0
+                return_message = "record added successfully"
+            except sqlite3.Error as error:
+                finish_code = 1
+                return_message = error
+            finally:
+                if conn:
+                    conn.close()
         return finish_code, return_message
 
     def fitting_remove(self, row_id):
@@ -219,6 +224,10 @@ class DbOperations:
             if conn:
                 conn.close()
         return finish_code, record, error_text
+
+
+# database = DbOperations()
+# print(database.fitting_add("valve0", 12.5, "remarks"))
 
 
 """

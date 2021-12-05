@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>750</width>
-    <height>329</height>
+    <height>331</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -44,6 +44,11 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QTableWidget" name="table_fittings">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
