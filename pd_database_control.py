@@ -1,7 +1,6 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pd_database
-import pd_database_record
 from pres_drop_db import DbOperations
 from pd_database_dialog import Ui_Dialog
 """
@@ -10,53 +9,48 @@ pd_database and pres_drop_db are inherited
 """
 
 
-class DatabaseOperations:
-    """
-    class performing all database operations required
-    """
-    def __init__(self):
-        self.db = DbOperations()
-
-    def list_records(self):
-        """
-        Generates and returns a list of all records from the table fittings. in case of a SQLite error nothing will
-        be returned.
-        todo: action in case error_code = 1  ==> show popup error message with error text
-        :return: fitting_lst[1]  list of tuples with (for each record): rowid; fitting name; friction factor
-        """
-
-        fitting_lst = self.db.fittings_list()
-        error_code = fitting_lst[0]
-        if error_code == 0:
-            return fitting_lst[1]
-
-    def show_record(self, _id):
-        """
-        Get the data from row id _id
-        """
-        data_returned = self.db.fittings_get_one_record(_id)
-        return data_returned[1]
-
-
 class DialogShow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(DialogShow, self).__init__(parent)
+        self.db = DbOperations()
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
 
-    def view_record(self, _name, _factor, _notes):
-        self.ui.fitting_name.setEnabled(False)
-        self.ui.fitting_name.setText(_name)
-        self.ui.friction_factor.setEnabled(False)
-        self.ui.friction_factor.setText(_factor)
-        self.ui.fitting_note.setEnabled(False)
-        self.ui.fitting_note.setPlainText(_notes)
+    def view_record(self, data):
+        self.ui.fitting_name.setReadOnly(True)
+        self.ui.fitting_name.setText(data[1])
+        self.ui.friction_factor.setReadOnly(True)
+        self.ui.friction_factor.setText(str(data[2]))
+        self.ui.fitting_note.setReadOnly(True)
+        self.ui.fitting_note.setPlainText(data[3])
         self.ui.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
-        self.ui.header.setText("View Record")
-        # self.ui.buttonBox.accepted.connect(self.ok_clicked)  # here not required
+        self.ui.header.setText("View Record# " + str(data[0]))
+        self.ui.buttonBox.accepted.connect(self.stop_view)
 
-    def ok_clicked(self):
-        print("ok clicked")
+    def add_record(self):
+        self.ui.header.setText("Add new record")
+        self.ui.buttonBox.accepted.connect(self.stop_add)
+
+    def change_record(self):
+        self.ui.header.setText("Change record# " + "number")
+        self.ui.buttonBox.accepted.connect(self.stop_editing)
+
+    def stop_view(self):
+        self.close()
+
+    def stop_add(self):
+        """
+        Validate input, write new record to database and stop dialog
+        """
+        print("stop add record")
+        self.close()
+
+    def stop_editing(self):
+        """"
+        Validate input, write data to database and stop dialog
+        """
+        print("stop editing")
+        self.close()
 
 
 class DbFormExec:
@@ -67,7 +61,7 @@ class DbFormExec:
     def __init__(self):
         app = QtWidgets.QApplication(sys.argv)
         form = QtWidgets.QWidget()
-        self.db = DatabaseOperations()
+        self.db = DbOperations()
         self.ui = pd_database.Ui_fittings_table_mainenance()
         self.ui.setupUi(form)
 
@@ -75,6 +69,10 @@ class DbFormExec:
 
         # make connections
         self.ui.button_show_record.clicked.connect(self.show_item)
+        self.ui.button_add_record.clicked.connect(self.add_item)
+        self.ui.button_delete_record.clicked.connect(self.delete_item)
+        self.ui.button_change_record.clicked.connect(self.change_item)
+        self.ui.button_refresh.clicked.connect(self.refresh_database)
         self.ui.button_close.clicked.connect(self.close_window)
 
         form.show()
@@ -85,9 +83,12 @@ class DbFormExec:
         self.ui.table_fittings.setColumnWidth(0, 72)
         self.ui.table_fittings.setColumnWidth(1, 300)
         self.ui.table_fittings.setColumnWidth(2, 125)
-
-        # get list of records
-        records = self.db.list_records()
+        fitting_lst = self.db.fittings_list()
+        error_code = fitting_lst[0]
+        if error_code == 0:
+            records = fitting_lst[1]
+        else:
+            records = []
 
         # set number of rows in tableWidget
         self.ui.table_fittings.setRowCount(len(records))
@@ -107,27 +108,32 @@ class DbFormExec:
         :return:
         """
         row_chosen = int(self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 0).text())
-        data_returned = self.db.show_record(row_chosen)
-        _name = data_returned[1]
-        _factor = str(data_returned[2])
-        _notes = data_returned[3]
-
+        # data_returned = self.db.show_record(row_chosen)
+        data_returned = self.db.fittings_get_one_record(row_chosen)[1]
         dialog = DialogShow()
-        dialog.view_record(_name, _factor, _notes)
-
+        dialog.view_record(data_returned)
         dialog.exec()
 
     def add_item(self):
-        pass
+        dialog = DialogShow()
+        dialog.add_record()
+        dialog.exec()
 
     def delete_item(self):
-        pass
+        box = QtWidgets.QMessageBox()
+        print(box.exec_())
+        print("delete record dummy")
 
     def change_item(self):
-        pass
+        dialog = DialogShow()
+        dialog.change_record()
+        dialog.exec()
 
     def refresh_database(self):
-        pass
+        box = QtWidgets.QMessageBox()
+        box.exec_()
+        print("refresh database dummy")
+        # print(self.db.refresh_database())  # the real code. Uncomment when programming of the warning is done
 
     @staticmethod
     def close_window():
