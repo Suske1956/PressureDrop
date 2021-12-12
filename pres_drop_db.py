@@ -35,6 +35,11 @@ CREATE_TABLE_FITTINGS = """CREATE TABLE fittings (
 FITTINGS_ADD_RECORD = """INSERT INTO fittings
                             (fitting_name, fitting_friction_factor, fitting_notes)
                             VALUES (?, ?, ?);"""
+# van shopping list: """UPDATE products SET prod_required = ? WHERE rowid = ?"""
+FITTINGS_CHANGE_RECORD = """ UPDATE fittings SET 
+                             fitting_friction_factor = ?,
+                             fitting_notes = ?
+                             WHERE fitting_name = ?"""
 FITTINGS_DELETE_ONE_RECORD = """DELETE FROM fittings WHERE rowid = ?"""
 FITTINGS_GET_ALL_RECORDS = """SELECT rowid, * FROM fittings"""
 FITTINGS_GET_ONE_RECORD = """SELECT rowid, * FROM fittings WHERE rowid = ?"""
@@ -113,22 +118,40 @@ class DbOperations:
             if conn:
                 conn.close()
 
-    def fitting_add(self, name, friction_factor, notes):
+    def fittings_change(self, change_tuple):
+        """
+        Change a record from the table fittings.
+        """
+        conn = None
+        try:
+            conn = sqlite3.connect(self.db_name)
+            c = conn.cursor()
+            c.execute(FITTINGS_CHANGE_RECORD, change_tuple)
+            conn.commit()
+            c.close()
+            finish_code = 0
+            return_message = "record was changed successfully"
+        except sqlite3.Error as error:
+            finish_code = 1
+            return_message = error
+        finally:
+            if conn:
+                conn.close()
+        return finish_code, return_message
+
+    def fitting_add(self, add_tuple):
         """
         Add a record to the table fittings.
         name = name of the fitting. It should be unique - see constant CREATE_TABLE_FITTINGS.
         friction factor is a real number to be used in calculating the pressure drop.
         notes is a text field to store notes regarding the fitting.
         both name and friction factor must be filled out to add the record.
-        :param name: fitting name, string
-        :param friction_factor: fitting friction factor, real
-        :param notes: notes, string
+        param add_tuple: (fitting name - string, fitting friction factor - real,  notes - string)
         :return:
         (finish_code, return_message)
         """
         conn = None
-        add_tuple = (name, friction_factor, notes)
-        if name == "" and friction_factor == "":
+        if add_tuple[0] == "" or add_tuple[1] == "":
             finish_code = 1
             return_message = "fields name and fiction factor must be filled"
         else:
@@ -209,6 +232,7 @@ class DbOperations:
         SQLiter error: error text - string
         """
         conn = None
+        record = None
         finish_code = 0
         error_text = "No error"
         try:
