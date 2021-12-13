@@ -37,9 +37,10 @@ FITTINGS_ADD_RECORD = """INSERT INTO fittings
                             VALUES (?, ?, ?);"""
 # van shopping list: """UPDATE products SET prod_required = ? WHERE rowid = ?"""
 FITTINGS_CHANGE_RECORD = """ UPDATE fittings SET 
+                             fitting_name = ?,
                              fitting_friction_factor = ?,
                              fitting_notes = ?
-                             WHERE fitting_name = ?"""
+                             WHERE rowid = ?"""
 FITTINGS_DELETE_ONE_RECORD = """DELETE FROM fittings WHERE rowid = ?"""
 FITTINGS_GET_ALL_RECORDS = """SELECT rowid, * FROM fittings"""
 FITTINGS_GET_ONE_RECORD = """SELECT rowid, * FROM fittings WHERE rowid = ?"""
@@ -165,7 +166,7 @@ class DbOperations:
                 return_message = "record added successfully"
             except sqlite3.Error as error:
                 finish_code = 1
-                return_message = error
+                return_message = str(error)
             finally:
                 if conn:
                     conn.close()
@@ -253,6 +254,9 @@ class DbOperations:
 # database = DbOperations()
 # print(database.fitting_add("valve0", 12.5, "remarks"))
 
+"""change_tuple = ("testdb1", 12.3, "dit is de test", 2)
+database = DbOperations()
+print(database.fittings_change(change_tuple))"""
 
 """
 database = DbOperations()

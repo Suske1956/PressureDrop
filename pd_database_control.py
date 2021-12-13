@@ -11,15 +11,35 @@ pd_database and pres_drop_db are inherited
 
 class GeneralMethods:
     """
-    Class of universal methods and function for
+    Class of universal methods and function for general use.
     """
 
     @staticmethod
     def show_message(text):
+        """
+        Shows a message with message text
+        parameter: text - string message text
+        return: nothing
+        """
         box = QMessageBox()
         box.setWindowTitle("Message")
         box.setText(text)
         box.exec_()
+
+    @staticmethod
+    def yes_no_warning(text):
+        """
+        Shows a yes / no question with a warning
+        parameter: text - string text to display
+        return: QMessagebox.Yes or QMessagebox.No
+        """
+        box = QMessageBox()
+        box.setWindowTitle("Warning")
+        box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        box.setDefaultButton(QMessageBox.No)
+        box.setIcon(QMessageBox.Critical)
+        box.setText(text)
+        return box.exec_()
 
 
 class DialogShow(QDialog):
@@ -36,6 +56,11 @@ class DialogShow(QDialog):
         self.ui.friction_factor.editingFinished.connect(self.validate_friction_factor)
 
     def validate_friction_factor(self):
+        """
+        Method to validate the friction factor, triggered on editingFinished of the line edit friction_factor.
+        In case it cannot be converted to a number the line edit is erased and focus is set to it. Also, a message
+        tells the user what is wrong.
+        """
         try:
             float(self.ui.friction_factor.text())
         except ValueError:
@@ -44,6 +69,10 @@ class DialogShow(QDialog):
             self.ui.friction_factor.setText("")
 
     def validate_input(self):
+        """
+        Method to validate the input of this dialog. It tests on fitting name and friction factor to be filled out.
+        Friction factor can be converted to a number since this is secured in validate_friction_factor.
+        """
         if self.ui.fitting_name.text() != "" and self.ui.friction_factor.text() != "":
             return True
         else:
@@ -55,7 +84,7 @@ class DialogShow(QDialog):
         View a record. The data from the record are collected in DbFormExec and transferred to this method.
         To be considered let this dialog get the data based on ID.
         All fields are set to read only to avoid editing.
-        Connecting to a stop method is not required since one command is sufficient (self.stop)
+        Connecting to a stop method is not required since one command is sufficient (self.close)
         """
         self.ui.fitting_name.setReadOnly(True)
         self.ui.fitting_name.setText(data[1])
@@ -69,7 +98,7 @@ class DialogShow(QDialog):
 
     def add_record(self):
         """
-        Set up dialog for adding a record and connect ok button to stop method (process input)
+        Set up dialog for adding a record and connect ok button to stop method.
         """
         self.ui.header.setText("Add new record")
         self.ui.buttonBox.accepted.connect(self.stop_add)
@@ -77,14 +106,13 @@ class DialogShow(QDialog):
     def change_record(self, data):
         """
         Set up dialog to change a record. Connect to stop method.
-        todo: get row id on starting the method read data from database and show them in the dialog.
         """
-        self.ui.fitting_name.setReadOnly(True)
+        # self.ui.fitting_name.setReadOnly(True)
         self.ui.fitting_name.setText(data[1])
         self.ui.friction_factor.setText(str(data[2]))
         self.ui.fitting_note.setPlainText(data[3])
         self.ui.header.setText("Change record# " + str(data[0]))
-        self.ui.buttonBox.accepted.connect(self.stop_editing)
+        self.ui.buttonBox.accepted.connect(lambda: self.stop_editing(str(data[0])))
 
     def stop_add(self):
         """
@@ -94,21 +122,27 @@ class DialogShow(QDialog):
             record_add = (self.ui.fitting_name.text(),
                           float(self.ui.friction_factor.text()),
                           self.ui.fitting_note.toPlainText())
-            self.db.fitting_add(record_add)
-            self.close()
+            return_tuple = self.db.fitting_add(record_add)
+            if return_tuple[0] == 1:
+                GeneralMethods.show_message(return_tuple[1])
+            else:
+                self.close()
 
-    def stop_editing(self):
+    def stop_editing(self, record_id):
         """"
         Validate input, write data to database and stop dialog
-        todo: write code to accomplish task.
         """
         print("stop editing")
         if self.validate_input():
-            record_change = (float(self.ui.friction_factor.text()),
+            record_change = (self.ui.fitting_name.text(),
+                             float(self.ui.friction_factor.text()),
                              self.ui.fitting_note.toPlainText(),
-                             self.ui.fitting_name.text())
-            self.db.fittings_change(record_change)
-            self.close()
+                             record_id)
+            return_tuple = self.db.fittings_change(record_change)
+            if return_tuple[0] == 1:
+                GeneralMethods.show_message(return_tuple[1])
+            else:
+                self.close()
 
 
 class DbFormExec:
@@ -170,8 +204,7 @@ class DbFormExec:
     def show_item(self):
         """
         Shows the window pd_record.py with the data of the current item of the fittings list.
-        todo: implement error handling for database errors.
-        :return:
+        In case of an empty table a message is show telling that no record is available to show the user.
         """
         if self.ui.table_fittings.rowCount() > 0:  # avoid using method on empty table
             row_chosen = int(self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 0).text())
@@ -183,17 +216,40 @@ class DbFormExec:
             GeneralMethods.show_message("Nothing to show")
 
     def add_item(self):
+        """
+        Starts dialog to add a record. and refreshes the form afterwards.
+        """
         dialog = DialogShow()
         dialog.add_record()
         dialog.exec()
         self.refresh_form()
 
     def delete_item(self):
-        box = QMessageBox()
-        print(box.exec_())
-        print("delete record dummy")
+        """
+        Gets the current record id and fitting name from the table
+        asks the user if he really wants to delete the record. If yes the record is removed from the table.
+        Finally, the form is refreshed to show the result.
+        """
+        if self.ui.table_fittings.rowCount() > 0:  # avoid using method on empty table
+            record_number = self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 0).text()
+            message = "Record: " + record_number\
+                      + " - " + self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 1).text()\
+                      + "\nwill be deleted. Are you sure? "
+
+            if QMessageBox.Yes == GeneralMethods.yes_no_warning(message):
+                GeneralMethods.show_message(self.db.fitting_remove(record_number)[1])
+            else:
+                GeneralMethods.show_message("Record: " + record_number + "\nwas not deleted")
+            self.refresh_form()
+        else:
+            GeneralMethods.show_message("Nothing to delete")
 
     def change_item(self):
+        """
+        Gets the data from the current record. Next a dialog is started to change the record. Finally, the form is
+        refreshed to show the result.
+        In case the table is empty a message is shown that no record to be changed.
+        """
         if self.ui.table_fittings.rowCount() > 0:  # avoid using method on empty table
             row_chosen = int(self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 0).text())
             data_returned = self.db.fittings_get_one_record(row_chosen)[1]
@@ -205,14 +261,14 @@ class DbFormExec:
             GeneralMethods.show_message("No records to change")
 
     def refresh_database(self):
+        """
+        The user is asked if he really wants to delete all data.
+        If yes the table is dropped and rebuilt again calling refresh_database from pres_drop_db.py
+        Finally the form is refreshed to show the user the result.
+        """
         message_text = ""
-        box = QMessageBox()
-        box.setWindowTitle("Warning")
-        box.setText("Are you sure you want to reset the database. All information will be lost!!")
-        box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        box.setDefaultButton(QMessageBox.No)
-        box.setIcon(QMessageBox.Critical)
-        box_value = box.exec_()
+        box_value = GeneralMethods.yes_no_warning("Are you sure you want to reset the database. "
+                                                  "All information will be lost!!")
         if box_value == QMessageBox.Yes:
             output = self.db.refresh_database()
             if output[0] == 0:
