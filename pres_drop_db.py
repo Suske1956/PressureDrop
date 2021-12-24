@@ -1,30 +1,44 @@
 import sqlite3
 
-
 """
-This module contains all classes required to perform database operations.
-November 07, 2021: first issue is finished. The module contains the constants required for sqlite database operation
-and a class DbOperations. containing functions:
-refresh_database    drops table fittings and created the table again. In case no database present yet there will be 
-                    an error 'no such table: fittings' which is no problem since the table will created in the 
-                    new database which will be created on connecting to the database. 
-list_tables         gives a list of tables
-fitting_add         add a record to the table fittings
-fitting_remove      remove a record from the table fittings by rowid
-fittings_list       gives a list of tuples containing the data in table fittings with rowid. 
-
-note: since name is unique name can be used to remove a specific record as well. 
+This module contains all classes required to perform database operations on table fittings.
+It contains one class: DbOperations containing all methods required. 
 """
 
+"""
+Examples to use the methods: 
+# load the class DbOperations
+database = DbOperations()
+
+# get the information from one with id = 1
+print(database.fittings_get_one_record(1))
+
+# change record with rowid = 2
+change_tuple = ("testdb1", 12.3, "dit is de test", 2)
+print(database.fittings_change(change_tuple))
+
+# add record to the database
+print(database.fitting_add("valve0", 12.5, "remarks"))
+
+# get a list of records in the database
+print(database.fittings_list())
+
+# remove record with rowid = 10
+print(database.fitting_remove(10))
+
+# drop table fittings, create table fittings again and load standard values from
+# FITTINGS_STANDARD_TUPLE.
+print(database.refresh_database())
+"""
 
 """
-constants: consider changing the constants to make the database application more universal.
-Approach can be moving the constants to a class with parameters for:  
-database name       string
-table name          string
-fields              dictionary
-From these variables the class generates the variables below which makes the class reusable for other tables.   
+This module is specific for database "pres_drop.db" with table "fittings" and fields. 
+to move to a more universal module the database- and table names can be set during initiation of the module. 
+The same goes for the SQLite commands needed to maintain the database and last, but not least the tuple
+holding the standard fields. The constants will be removed from this module and replaced by variables in the class. 
 """
+
+# constants
 DB_NAME = "pres_drop.db"
 LIST_TABLES = """SELECT name FROM sqlite_master WHERE type='table';"""
 DROP_TABLE_FITTINGS = """DROP TABLE fittings"""
@@ -35,7 +49,6 @@ CREATE_TABLE_FITTINGS = """CREATE TABLE fittings (
 FITTINGS_ADD_RECORD = """INSERT INTO fittings
                             (fitting_name, fitting_friction_factor, fitting_notes)
                             VALUES (?, ?, ?);"""
-# van shopping list: """UPDATE products SET prod_required = ? WHERE rowid = ?"""
 FITTINGS_CHANGE_RECORD = """ UPDATE fittings SET 
                              fitting_name = ?,
                              fitting_friction_factor = ?,
@@ -44,6 +57,12 @@ FITTINGS_CHANGE_RECORD = """ UPDATE fittings SET
 FITTINGS_DELETE_ONE_RECORD = """DELETE FROM fittings WHERE rowid = ?"""
 FITTINGS_GET_ALL_RECORDS = """SELECT rowid, * FROM fittings"""
 FITTINGS_GET_ONE_RECORD = """SELECT rowid, * FROM fittings WHERE rowid = ?"""
+# fittings standard list ref Bohl pages 144 ....
+FITTINGS_STANDARD_TUPLE = (("Globe valve straight", 4, "standard item"),
+                           ("Globe valve angle", 3, "standard item"),
+                           ("Globe valve 45°", 1, "standard item"),
+                           ("Bend, 90° R/d = 1", 0.3, "standard item"),
+                           ("Bend, 90° R/d = 2", 0.2, "standard item"))
 
 
 class DbOperations:
@@ -51,22 +70,26 @@ class DbOperations:
     This class contains functions to initiate a fresh database and populate it with the required tables.
     The functions can be used to refresh the database, in case of corrupted data.
     """
+
     def __init__(self):
         self.db_name = DB_NAME
 
     def refresh_database(self):
+
         """
-        This function erases the current table and populates the database with a new table.
+        This function drops the current table fittings and a new table.
         If the database does not exist a new database is created. In that case an error is generated because the table
         fittings does not exist in the freshly created database.
         The database name is established in constant DB_NAME
-        :return:
-        result_errors - number of errors, int
-        result_texts - list of strings
+        Next the table is populated with the standard records from FITTINGS_STANDARD_TUPLE
+        :return:        (result_errors - integer - - number of errors,
+                        result_texts - list of strings representing the result of the several actions)
         """
         conn = None
         result_errors = 0
         result_texts = []
+
+        # drop table fittings
         try:
             conn = sqlite3.connect(self.db_name)
             c = conn.cursor()
@@ -81,6 +104,7 @@ class DbOperations:
             if conn:
                 conn.close()
 
+        # create new table fittings
         try:
             conn = sqlite3.connect(self.db_name)
             c = conn.cursor()
@@ -94,6 +118,12 @@ class DbOperations:
         finally:
             if conn:
                 conn.close()
+
+        # populate table with standard values
+        for fitting in FITTINGS_STANDARD_TUPLE:
+            result = self.fitting_add(fitting)
+            result_errors = result_errors + result[0]
+            result_texts.append(result[1])
         return result_errors, result_texts
 
     def list_tables(self):
@@ -119,9 +149,15 @@ class DbOperations:
             if conn:
                 conn.close()
 
-    def fittings_change(self, change_tuple):
+    def fitting_change(self, change_tuple):
         """
         Change a record from the table fittings.
+        change_tuple:   (<name> -  string,
+                         <friction factor> - real,
+                         <notes> - string,
+                         <rowid> - integer)
+        :return:         (finish_code - integer - 0 = no error, 1 = error,
+                         return_message - string)
         """
         conn = None
         try:
@@ -134,7 +170,7 @@ class DbOperations:
             return_message = "record was changed successfully"
         except sqlite3.Error as error:
             finish_code = 1
-            return_message = error
+            return_message = str(error)
         finally:
             if conn:
                 conn.close()
@@ -143,19 +179,20 @@ class DbOperations:
     def fitting_add(self, add_tuple):
         """
         Add a record to the table fittings.
-        name = name of the fitting. It should be unique - see constant CREATE_TABLE_FITTINGS.
-        friction factor is a real number to be used in calculating the pressure drop.
-        notes is a text field to store notes regarding the fitting.
-        both name and friction factor must be filled out to add the record.
-        param add_tuple: (fitting name - string, fitting friction factor - real,  notes - string)
-        :return:
-        (finish_code, return_message)
+        add_tuple   (<name of the fitting> - string - must be unique,
+                    <friction factor> - real,
+                    <notes> - string)
+        :return:     (finish_code - integer - 0 = no error; 1 =error,
+                    return_message - string)
         """
+
         conn = None
+        # check if required data are available.
         if add_tuple[0] == "" or add_tuple[1] == "":
             finish_code = 1
             return_message = "fields name and fiction factor must be filled"
         else:
+            # add record
             try:
                 conn = sqlite3.connect(self.db_name)
                 c = conn.cursor()
@@ -175,10 +212,9 @@ class DbOperations:
     def fitting_remove(self, row_id):
         """
         removes a record from the table fittings
-        finish_code = 0: no errors and 1 in case of an error
-        finish text = message record was removed or error from sqlite3
-        :param row_id: row id of the record to be removed
-        :return: (finish_code, finish_text)
+        row_id: integer, row id of the record to be removed
+        :return:    (finish_code - integer - 0 = no error; 1 =error,
+                    return_message - string)
         """
         conn = None
         try:
@@ -200,11 +236,9 @@ class DbOperations:
     def fittings_list(self):
         """
         Reads the table fittings and returns a tuple containing:
-        - error code: 0 = no problems; 1 = error occurred.
-        - all data as a list of tuples. Each tuple contains: row index, fitting name, friction factor, additional notes
-        - error text  sqlite3 error or "no errors"
-        :return:
-        (finish code, data = list of tuples, error text)
+        :return:    (finish_code - integer - 0 = no error; 1 - error occurred,
+                    records - list of tuples, containing the data,
+                    error_text - string)
         """
         conn = None
         finish_code = 0
@@ -224,13 +258,13 @@ class DbOperations:
                 conn.close()
         return finish_code, records, error_text
 
-    def fittings_get_one_record(self, row_id):
+    def fitting_get_record(self, row_id):
         """
-        Reads one record from the table fittings with the row id given.
-        :return: a tuple of:  finish_code, record, error_text
-        finish code: 0 - no error; 1 - SQLite error
-        record: tuple - (rowid - integer, fitting name - string, friction factor - real, notes - string)
-        SQLiter error: error text - string
+        Reads one record from the table fittings.
+        row_id: integer - row id of the row to be read.
+        :return:    (finish_code - integer - 0 = no errors; 1 = error occurred,
+                    record - tuple - data of the record, None in case of an error
+                    error_text - string)
         """
         conn = None
         record = None
@@ -239,41 +273,16 @@ class DbOperations:
         try:
             conn = sqlite3.connect(self.db_name)
             c = conn.cursor()
-            c.execute(FITTINGS_GET_ONE_RECORD, (str(row_id), ))
+            c.execute(FITTINGS_GET_ONE_RECORD, (str(row_id),))
             record = c.fetchone()
             c.close()
         except sqlite3.Error as error:
             finish_code = 1
-            error_text = error
+            error_text = str(error)
         finally:
             if conn:
                 conn.close()
+            if record is None:
+                finish_code = 1
+                error_text = "No record data"
         return finish_code, record, error_text
-
-
-# database = DbOperations()
-# print(database.fitting_add("valve0", 12.5, "remarks"))
-
-"""change_tuple = ("testdb1", 12.3, "dit is de test", 2)
-database = DbOperations()
-print(database.fittings_change(change_tuple))"""
-
-"""
-database = DbOperations()
-print(database.fittings_get_one_record(1))
-print(database.refresh_database())
-print(database.fitting_add("valve0", 12.5, "remarks"))
-print(database.fitting_add("valve1", 12.5, "remarks"))
-print(database.fitting_add("valve2", 12.5, "remarks"))
-print(database.fitting_add("valve3", 12.5, "remarks"))
-print(database.fitting_add("valve4", 12.5, "remarks"))
-print(database.fitting_add("valve5", 12.5, "remarks"))
-print(database.fitting_add("valve6", 12.5, "remarks"))
-print(database.fitting_add("valve7", 12.5, "remarks"))
-print(database.fitting_add("valve8", 12.5, "remarks"))
-print(database.fitting_add("valve9", 12.5, "remarks"))
-print(database.fitting_add("valve10", 12.5, "remarks"))
-print(database.fittings_list())
-print(database.fitting_remove(10))
-print(database.fittings_list())
-"""

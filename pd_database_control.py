@@ -58,7 +58,7 @@ class DialogShow(QDialog):
     def validate_friction_factor(self):
         """
         Method to validate the friction factor, triggered on editingFinished of the line edit friction_factor.
-        In case it cannot be converted to a number the line edit is erased and focus is set to it. Also, a message
+        In case it cannot be converted to a number the line edit is erased and focus is set to it. A message
         tells the user what is wrong.
         """
         try:
@@ -79,22 +79,27 @@ class DialogShow(QDialog):
             GeneralMethods.show_message("Name and Friction factor must be a filled out")
             return False
 
-    def view_record(self, data):
+    def view_record(self, row_id):
         """
-        View a record. The data from the record are collected in DbFormExec and transferred to this method.
-        To be considered let this dialog get the data based on ID.
-        All fields are set to read only to avoid editing.
+        View a record.
+        fittings_get_record is called to get the data based on the row id.
         Connecting to a stop method is not required since one command is sufficient (self.close)
         """
-        self.ui.fitting_name.setReadOnly(True)
-        self.ui.fitting_name.setText(data[1])
-        self.ui.friction_factor.setReadOnly(True)
-        self.ui.friction_factor.setText(str(data[2]))
-        self.ui.fitting_note.setReadOnly(True)
-        self.ui.fitting_note.setPlainText(data[3])
-        self.ui.buttonBox.setStandardButtons(QDialogButtonBox.Ok)
-        self.ui.header.setText("View Record# " + str(data[0]))
-        self.ui.buttonBox.accepted.connect(self.close)
+
+        data = self.db.fitting_get_record(row_id)
+        if data[0] == 0:
+            self.ui.fitting_name.setReadOnly(True)
+            self.ui.fitting_name.setText(data[1][1])
+            self.ui.friction_factor.setReadOnly(True)
+            self.ui.friction_factor.setText(str(data[1][2]))
+            self.ui.fitting_note.setReadOnly(True)
+            self.ui.fitting_note.setPlainText(data[1][3])
+            self.ui.buttonBox.setStandardButtons(QDialogButtonBox.Ok)
+            self.ui.header.setText("View Record# " + str(data[1][0]))
+            self.ui.buttonBox.accepted.connect(self.close)
+        else:
+            GeneralMethods.show_message(data[2])
+            self.ui.buttonBox.setStandardButtons(QDialogButtonBox.Close)
 
     def add_record(self):
         """
@@ -103,21 +108,8 @@ class DialogShow(QDialog):
         self.ui.header.setText("Add new record")
         self.ui.buttonBox.accepted.connect(self.stop_add)
 
-    def change_record(self, data):
-        """
-        Set up dialog to change a record. Connect to stop method.
-        """
-        # self.ui.fitting_name.setReadOnly(True)
-        self.ui.fitting_name.setText(data[1])
-        self.ui.friction_factor.setText(str(data[2]))
-        self.ui.fitting_note.setPlainText(data[3])
-        self.ui.header.setText("Change record# " + str(data[0]))
-        self.ui.buttonBox.accepted.connect(lambda: self.stop_editing(str(data[0])))
-
     def stop_add(self):
-        """
-        Validate input, write new record to database and stop dialog
-        """
+        """ Validate input, if ok: write new record to database and stop dialog else: show error message"""
         if self.validate_input():
             record_add = (self.ui.fitting_name.text(),
                           float(self.ui.friction_factor.text()),
@@ -128,17 +120,29 @@ class DialogShow(QDialog):
             else:
                 self.close()
 
+    def change_record(self, row_id):
+        """ Set up dialog to change a record. Connect to stop method. """
+        data = self.db.fitting_get_record(row_id)
+        if data[0] == 0:
+            self.ui.fitting_name.setText(data[1][1])
+            self.ui.friction_factor.setText(str(data[1][2]))
+            self.ui.fitting_note.setPlainText(data[1][3])
+            self.ui.header.setText("Change record# " + str(data[1][0]))
+            self.ui.buttonBox.accepted.connect(lambda: self.stop_editing(str(data[1][0])))
+        else:
+            GeneralMethods.show_message(data[2])
+            self.ui.buttonBox.setStandardButtons(QDialogButtonBox.Close)
+
     def stop_editing(self, record_id):
         """"
         Validate input, write data to database and stop dialog
         """
-        print("stop editing")
         if self.validate_input():
             record_change = (self.ui.fitting_name.text(),
                              float(self.ui.friction_factor.text()),
                              self.ui.fitting_note.toPlainText(),
                              record_id)
-            return_tuple = self.db.fittings_change(record_change)
+            return_tuple = self.db.fitting_change(record_change)
             if return_tuple[0] == 1:
                 GeneralMethods.show_message(return_tuple[1])
             else:
@@ -208,9 +212,8 @@ class DbFormExec:
         """
         if self.ui.table_fittings.rowCount() > 0:  # avoid using method on empty table
             row_chosen = int(self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 0).text())
-            data_returned = self.db.fittings_get_one_record(row_chosen)[1]
             dialog = DialogShow()
-            dialog.view_record(data_returned)
+            dialog.view_record(row_chosen)
             dialog.exec()
         else:
             GeneralMethods.show_message("Nothing to show")
@@ -252,9 +255,8 @@ class DbFormExec:
         """
         if self.ui.table_fittings.rowCount() > 0:  # avoid using method on empty table
             row_chosen = int(self.ui.table_fittings.item(self.ui.table_fittings.currentRow(), 0).text())
-            data_returned = self.db.fittings_get_one_record(row_chosen)[1]
             dialog = DialogShow()
-            dialog.change_record(data_returned)
+            dialog.change_record(row_chosen)
             dialog.exec()
             self.refresh_form()
         else:
@@ -272,9 +274,13 @@ class DbFormExec:
         if box_value == QMessageBox.Yes:
             output = self.db.refresh_database()
             if output[0] == 0:
-                message_text = "Database was reset successfully"
-        else:
-            message_text = "Database reset failed"
+                message_text = "Database was reset successfully: \n"
+                for text in output[1]:
+                    message_text = message_text + "\n" + text
+            else:
+                message_text = "Database reset failed: \n"
+                for text in output[1]:
+                    message_text = message_text + "\n" + text
         GeneralMethods.show_message(message_text)
         self.refresh_form()
 
